@@ -105,3 +105,22 @@ Nesta etapa, foi criado o ambiente de desenvolvimento conteinerizado utilizando 
 - Iniciar ambiente: `docker compose up -d`
 - Parar ambiente: `docker compose down`
 - Acessar container PHP: `docker compose exec backend bash`
+
+
+## Fase 2 e 3: Banco de Dados e API REST
+
+### Modelagem de Dados
+- **Tabela `columns`:** Representa as listas do Kanban (To Do, Doing, Done). Possui campo `order_index` para ordenação visual.
+- **Tabela `cards`:** Representa as tarefas. Possui chave estrangeira `column_id` ligando à coluna e `order_index` para posição.
+- **Relacionamento:** Implementado `One-to-Many` (Uma Coluna tem N Cards).
+
+### API Endpoints
+| Método | Rota | Controller | Descrição |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/kanban` | `KanbanController@index` | Retorna todas as colunas com seus respectivos cards (Eager Loading) |
+| `POST` | `/api/cards` | `KanbanController@storeCard` | Cria um novo cartão |
+| `PUT` | `/api/cards/{id}` | `KanbanController@updateCard` | Move o cartão entre colunas ou muda posição |
+
+### Soluções Técnicas
+- Utilizado **Eager Loading** (`with('cards')`) para otimizar consultas SQL (N+1 Problem).
+- Criado **Seeder** para popular o banco com dados iniciais para testes de frontend.
