@@ -1,0 +1,59 @@
+services:
+  # 1. Aplicação Laravel (Processamento)
+  backend:
+    build: ./backend
+    container_name: app_backend
+    restart: unless-stopped
+    volumes:
+      - ./backend:/var/www
+    networks:
+      - app-net
+
+  # 2. Servidor Web Nginx (Porta de Entrada da API)
+  nginx:
+    image: nginx:alpine
+    container_name: app_server
+    restart: unless-stopped
+    ports:
+      - "8000:80" # API rodará em localhost:8000
+    volumes:
+      - ./backend:/var/www
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+    networks:
+      - app-net
+
+  # 3. Banco de Dados
+  db:
+    image: mysql:8.0
+    container_name: app_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: kanban_db
+      MYSQL_ROOT_PASSWORD: secret
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - app-net
+
+  # 4. Frontend Vue.js
+  frontend:
+    build: ./frontend
+    container_name: app_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173" # Vue rodará em localhost:5173
+    volumes:
+      - ./frontend:/app
+      #- /app/node_modules # Truque para não apagar a pasta node_modules
+    networks:
+      - app-net
+    command: npm run dev -- --host # Libera acesso externo
+
+networks:
+  app-net:
+    driver: bridge
+
+volumes:
+  db_data:
