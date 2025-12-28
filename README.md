@@ -124,3 +124,23 @@ Nesta etapa, foi criado o ambiente de desenvolvimento conteinerizado utilizando 
 ### Soluções Técnicas
 - Utilizado **Eager Loading** (`with('cards')`) para otimizar consultas SQL (N+1 Problem).
 - Criado **Seeder** para popular o banco com dados iniciais para testes de frontend.
+
+
+## Fase 4: Frontend Vue.js e Interatividade
+
+### Tecnologias
+- **Vue 3 (Composition API):** Gerenciamento de estado reativo.
+- **Axios:** Cliente HTTP para comunicação assíncrona com a API Laravel.
+- **VueDraggable:** Biblioteca baseada no `Sortable.js` para funcionalidade Drag & Drop.
+
+### Implementação do Drag & Drop
+A lógica de persistência foi implementada no evento `@change` do componente draggable:
+1.  **Detecção:** O evento identifica se o cartão foi *adicionado* a uma nova coluna ou *movido* na mesma.
+2.  **Payload:** Captura o `id` do cartão, o `id` da nova coluna e o novo `order_index`.
+3.  **Persistência:** Dispara requisição `PUT /api/cards/{id}`.
+    - O Backend valida os dados.
+    - O banco de dados é atualizado.
+    - Em caso de erro na API, seria necessário reverter o estado visual (rollback), mas o MVP assume sucesso.
+
+### Estrutura de Componentes
+- `KanbanBoard.vue`: Componente inteligente que busca os dados (`onMounted`) e gerencia a lógica de movimentação.
