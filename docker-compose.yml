@@ -51,6 +51,21 @@ services:
       - app-net
     command: npm run dev -- --host # Libera acesso externo
 
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: app_pma
+    environment:
+      PMA_HOST: db       # Tem que ser igual ao nome do serviço do banco acima
+      PMA_USER: root
+      PMA_PASSWORD: secret
+    ports:
+      - "8081:80"        # Vamos usar 8081 para não conflitar com o Skins (8080)
+    depends_on:
+      - db
+    networks:
+      - app-net
+
 networks:
   app-net:
     driver: bridge

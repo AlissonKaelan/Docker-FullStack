@@ -78,3 +78,30 @@ docker compose logs -f frontend
 - MySQL 8
 - Nginx
 EOF
+
+
+
+# Fase 1: Configuração de Infraestrutura (Docker)
+
+## Visão Geral
+Nesta etapa, foi criado o ambiente de desenvolvimento conteinerizado utilizando Docker e Docker Compose, eliminando a necessidade de instalar PHP/Node/MySQL diretamente no host. A arquitetura segue o padrão de containers isolados (Microserviços).
+
+## Arquitetura dos Containers
+- **App Backend (app_backend):** Container PHP 8.2-FPM com extensões necessárias para Laravel (GD, BCMath, PDO MySQL).
+- **App Frontend (app_frontend):** Container Node.js (Alpine) rodando Vite server para Vue.js 3.
+- **Database (app_db):** MySQL 8.0 com persistência de dados via volumes Docker.
+- **Webserver (app_server):** Nginx (Alpine) atuando como Reverse Proxy. Redireciona tráfego da porta 8000 para a API (PHP-FPM).
+- **Gerenciador DB (app_pma):** PhpMyAdmin rodando na porta 8081 para administração visual do banco.
+
+## Portas Mapeadas (Host -> Container)
+| Serviço | Porta Host | Porta Interna | Descrição |
+| :--- | :--- | :--- | :--- |
+| API (Nginx) | `8000` | `80` | Ponto de entrada da aplicação Backend |
+| Frontend | `5173` | `5173` | Servidor de desenvolvimento Vue (Hot Reload) |
+| PhpMyAdmin | `8081` | `80` | Interface do Banco de Dados |
+| MySQL | `N/A` | `3306` | Acessível apenas internamente pela rede `app-net` |
+
+## Comandos Principais
+- Iniciar ambiente: `docker compose up -d`
+- Parar ambiente: `docker compose down`
+- Acessar container PHP: `docker compose exec backend bash`
