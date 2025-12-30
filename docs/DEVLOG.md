@@ -41,3 +41,13 @@ Este documento registra os desafios técnicos encontrados durante a construção
 - **Solução:**
     1. Ajuste no `vite.config.js`: `server.host: '0.0.0.0'` e `usePolling: true`.
     2. Criação manual do arquivo `config/cors.php` no Laravel 11 liberando `allowed_origins => ['*']`.
+
+### Erro 500 no Login/Registro (Call to undefined method createToken)
+- **Sintoma:** O comando cURL retornava o HTML de uma página de erro do Laravel ou uma mensagem gigante de log no terminal.
+- **Causa:** O Model `User.php` padrão do Laravel 11 pode vir sem o Trait `HasApiTokens` importado, impedindo a geração de tokens do Sanctum.
+- **Solução:** Adicionada a linha `use Laravel\Sanctum\HasApiTokens;` e incluído o trait `HasApiTokens` dentro da classe `User`.
+
+### Erro de Validação Silencioso
+- **Sintoma:** Retorno de "Credenciais inválidas" mesmo após tentar registrar.
+- **Causa:** Erros de sintaxe no array de validação (`max":255` e `unique:user`) faziam o registro falhar antes de criar o usuário.
+- **Solução:** Correção da sintaxe e do nome da tabela para o plural (`users`).
