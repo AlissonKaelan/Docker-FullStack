@@ -1,16 +1,14 @@
 <script setup>
-// 1. IMPORTAÇÃO
-import BoardList from './components/BoardList.vue' 
+import KanbanBoard from './components/KanbanBoard.vue'
 </script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the documentation
-  </p>
-
-  <BoardList /> 
-  
+  <main>
+    <KanbanBoard />
+  </main>
 </template>
 
-<style scoped></style>
+<style>
+/* Reset básico */
+body { margin: 0; font-family: sans-serif; background-color: #f3f4f6; }
+</style>

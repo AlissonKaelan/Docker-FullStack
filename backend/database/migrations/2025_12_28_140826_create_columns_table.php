@@ -11,20 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('boards', function (Blueprint $table) {
+        Schema::create('columns', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Nome do quadro (ex: "Projeto X")
-            // Relaciona com a tabela users. Se o usuário for deletado, apaga os quadros dele.
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('title'); // Nome da coluna (To Do, Doing...)
+            $table->string('slug')->unique(); // Identificador único (to-do, doing...)
+            $table->integer('order_index')->default(0);// Para ordenar as colunas na tela
             $table->timestamps();
         });
     }
-
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('boards');
+        Schema::dropIfExists('columns');
     }
 };
