@@ -1,7 +1,12 @@
 services:
   # 1. Aplicação Laravel (Processamento)
   backend:
-    build: ./backend
+    build:
+      context: ./backend      
+      dockerfile: Dockerfile  
+      args:                   
+        user: alisson
+        uid: 1000
     container_name: app_backend
     restart: unless-stopped
     volumes:
@@ -27,6 +32,8 @@ services:
   # 3. Banco de Dados
   db:
     image: mysql:8.0
+    ports:
+      - "3307:3306"
     container_name: app_db
     restart: unless-stopped
     environment:
