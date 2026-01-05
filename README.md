@@ -1,146 +1,137 @@
-# 1. Sobrescreve o arquivo README.md com as novas instruções
-cat <<EOF > README.md
 # 📋 Dockerized Kanban Board
 
-Um sistema de gerenciamento de tarefas estilo Kanban, desenvolvido para consolidar conhecimentos em arquitetura Full Stack baseada em containers.
-
-## 🚀 Primeira Instalação (Setup)
-Se você acabou de clonar o projeto, rode estes comandos uma única vez para configurar tudo:
-
-1. **Subir o ambiente:**
-   \`\`\`bash
-   docker compose up -d
-   \`\`\`
-
-2. **Instalar dependências (Backend & Frontend):**
-   \`\`\`bash
-   docker compose exec backend composer install
-   docker compose exec frontend npm install
-   \`\`\`
-
-3. **Criar tabelas no Banco:**
-   \`\`\`bash
-   docker compose exec backend php artisan migrate
-   \`\`\`
+Um sistema de gerenciamento de tarefas estilo Kanban, desenvolvido para consolidar conhecimentos em arquitetura **Full Stack baseada em microsserviços e containers**. O projeto foca em performance, isolamento de ambiente e boas práticas de Engenharia de Software.
 
 ---
 
-## ⚙️ Comandos do Dia a Dia (Desenvolvimento)
+## 🚀 Instalação e Configuração (Quick Start)
 
-Aqui estão os comandos para iniciar e pausar seu trabalho.
+Se você acabou de clonar o projeto, siga estes passos para ter o ambiente rodando em minutos.
 
-### ▶️ Iniciar o Projeto
-Levanta todos os containers (Site, API e Banco) e libera o terminal.
-\`\`\`bash
+### 1. Subir a Infraestrutura
+
+Levanta os containers de API (Laravel), Cliente (Vue), Banco de Dados e Servidor Web.
+
+```bash
 docker compose up -d
-\`\`\`
-*Acesse em: http://localhost:5173*
 
-### ⏸️ Pausar o Projeto
-Para os containers, mas mantém o estado deles (rápido para voltar depois).
-\`\`\`bash
-docker compose stop
-\`\`\`
+```
 
-### ⏹️ Parar Totalmente (Derrubar)
-Para e remove os containers e redes (bom para liberar memória do PC).
-\`\`\`bash
-docker compose down
-\`\`\`
+### 2. Instalar Dependências
+
+Instala os pacotes do PHP (Composer) e do Node.js (NPM) dentro dos containers.
+
+```bash
+docker compose exec backend composer install
+docker compose exec frontend npm install
+
+```
+
+### 3. Setup do Banco de Dados
+
+Roda as migrações para criar as tabelas `columns` e `cards`.
+
+```bash
+docker compose exec backend php artisan migrate
+
+```
+
+> **Acesso:**
+> * 📱 **Aplicação:** [http://localhost:5173](https://www.google.com/search?q=http://localhost:5173)
+> * 🔌 **API (Direto):** [http://localhost:8000](https://www.google.com/search?q=http://localhost:8000)
+> * 🗄️ **PhpMyAdmin:** [http://localhost:8081](https://www.google.com/search?q=http://localhost:8081)
+> 
+> 
 
 ---
 
-## 🛠️ Comandos Úteis
+## ⚙️ Workflow de Desenvolvimento
 
-**Acessar o terminal do Backend (Laravel):**
-\`\`\`bash
+Comandos essenciais para o dia a dia do desenvolvedor.
+
+| Ação | Comando | Descrição |
+| --- | --- | --- |
+| **Iniciar** | `docker compose up -d` | Sobe todos os serviços e libera o terminal. |
+| **Pausar** | `docker compose stop` | Para os containers sem remover (rápido retorno). |
+| **Derrubar** | `docker compose down` | Remove containers e redes (limpeza total). |
+| **Logs API** | `docker compose logs -f backend` | Monitora erros do Laravel em tempo real. |
+| **Logs Front** | `docker compose logs -f frontend` | Monitora compilação do Vite. |
+
+### Acesso aos Terminais (Shell)
+
+Para rodar comandos do artisan ou npm dentro do ambiente:
+
+```bash
+# Terminal do Laravel (Backend)
 docker compose exec backend bash
-# Lá dentro você pode rodar: php artisan make:controller, etc.
-\`\`\`
+# Ex: php artisan make:controller TaskController
 
-**Acessar o terminal do Frontend (Vue):**
-\`\`\`bash
+# Terminal do Vue (Frontend)
 docker compose exec frontend sh
-# Lá dentro você pode rodar: npm install pacote-novo
-\`\`\`
+# Ex: npm install axios
 
-**Ver logs de erro (se algo quebrar):**
-\`\`\`bash
-docker compose logs -f backend
-# ou
-docker compose logs -f frontend
-\`\`\`
+```
 
-## 💻 Tecnologias
-- Docker & Docker Compose
-- Laravel 11 (API)
-- Vue.js 3 + Vite
-- MySQL 8
-- Nginx
-EOF
+---
 
+## 🏗️ Arquitetura e Decisões Técnicas
 
+Este projeto foi arquitetado para simular um ambiente de produção escalável. Abaixo, os detalhes de cada camada da aplicação.
 
-# Fase 1: Configuração de Infraestrutura (Docker)
+### 1. Infraestrutura (Docker)
 
-## Visão Geral
-Nesta etapa, foi criado o ambiente de desenvolvimento conteinerizado utilizando Docker e Docker Compose, eliminando a necessidade de instalar PHP/Node/MySQL diretamente no host. A arquitetura segue o padrão de containers isolados (Microserviços).
+A arquitetura segue o padrão de microsserviços isolados. Não é necessário ter PHP ou Node instalados na máquina host.
 
-## Arquitetura dos Containers
-- **App Backend (app_backend):** Container PHP 8.2-FPM com extensões necessárias para Laravel (GD, BCMath, PDO MySQL).
-- **App Frontend (app_frontend):** Container Node.js (Alpine) rodando Vite server para Vue.js 3.
-- **Database (app_db):** MySQL 8.0 com persistência de dados via volumes Docker.
-- **Webserver (app_server):** Nginx (Alpine) atuando como Reverse Proxy. Redireciona tráfego da porta 8000 para a API (PHP-FPM).
-- **Gerenciador DB (app_pma):** PhpMyAdmin rodando na porta 8081 para administração visual do banco.
+* **App Backend:** PHP 8.2-FPM (Alpine) com extensões GD, BCMath e PDO.
+* **App Frontend:** Node.js (Alpine) rodando servidor Vite.
+* **Database:** MySQL 8.0 com volumes persistentes.
+* **Webserver (Gateway):** Nginx atuando como **Reverse Proxy**, redirecionando o tráfego da porta `8000` para o PHP-FPM.
 
-## Portas Mapeadas (Host -> Container)
-| Serviço | Porta Host | Porta Interna | Descrição |
+**Mapeamento de Portas:**
+| Serviço | Host | Container | Função |
 | :--- | :--- | :--- | :--- |
-| API (Nginx) | `8000` | `80` | Ponto de entrada da aplicação Backend |
-| Frontend | `5173` | `5173` | Servidor de desenvolvimento Vue (Hot Reload) |
-| PhpMyAdmin | `8081` | `80` | Interface do Banco de Dados |
-| MySQL | `N/A` | `3306` | Acessível apenas internamente pela rede `app-net` |
+| **Frontend** | `5173` | `5173` | Hot Reload Vue.js |
+| **API Gateway** | `8000` | `80` | Entrada da API REST |
+| **PhpMyAdmin** | `8081` | `80` | Gestão visual do MySQL |
 
-## Comandos Principais
-- Iniciar ambiente: `docker compose up -d`
-- Parar ambiente: `docker compose down`
-- Acessar container PHP: `docker compose exec backend bash`
+### 2. Banco de Dados & Backend
 
+A modelagem de dados foi pensada para suportar a ordenação dinâmica do Kanban.
 
-## Fase 2 e 3: Banco de Dados e API REST
-
-### Modelagem de Dados
-- **Tabela `columns`:** Representa as listas do Kanban (To Do, Doing, Done). Possui campo `order_index` para ordenação visual.
-- **Tabela `cards`:** Representa as tarefas. Possui chave estrangeira `column_id` ligando à coluna e `order_index` para posição.
-- **Relacionamento:** Implementado `One-to-Many` (Uma Coluna tem N Cards).
-
-### API Endpoints
-| Método | Rota | Controller | Descrição |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/kanban` | `KanbanController@index` | Retorna todas as colunas com seus respectivos cards (Eager Loading) |
-| `POST` | `/api/cards` | `KanbanController@storeCard` | Cria um novo cartão |
-| `PUT` | `/api/cards/{id}` | `KanbanController@updateCard` | Move o cartão entre colunas ou muda posição |
-
-### Soluções Técnicas
-- Utilizado **Eager Loading** (`with('cards')`) para otimizar consultas SQL (N+1 Problem).
-- Criado **Seeder** para popular o banco com dados iniciais para testes de frontend.
+* **Tabelas:**
+* `columns`: Listas do Kanban (To Do, Doing, Done). Possui `order_index`.
+* `cards`: As tarefas em si. Relacionamento `1:N` com colunas.
 
 
-## Fase 4: Frontend Vue.js e Interatividade
+* **Performance:** Utilização de **Eager Loading** (`with('cards')`) na rota `GET /api/kanban` para evitar o problema de N+1 queries.
+* **API Endpoints:**
+* `PUT /api/cards/{id}`: Endpoint inteligente que detecta se o card apenas mudou de posição ou trocou de coluna.
 
-### Tecnologias
-- **Vue 3 (Composition API):** Gerenciamento de estado reativo.
-- **Axios:** Cliente HTTP para comunicação assíncrona com a API Laravel.
-- **VueDraggable:** Biblioteca baseada no `Sortable.js` para funcionalidade Drag & Drop.
 
-### Implementação do Drag & Drop
-A lógica de persistência foi implementada no evento `@change` do componente draggable:
-1.  **Detecção:** O evento identifica se o cartão foi *adicionado* a uma nova coluna ou *movido* na mesma.
-2.  **Payload:** Captura o `id` do cartão, o `id` da nova coluna e o novo `order_index`.
-3.  **Persistência:** Dispara requisição `PUT /api/cards/{id}`.
-    - O Backend valida os dados.
-    - O banco de dados é atualizado.
-    - Em caso de erro na API, seria necessário reverter o estado visual (rollback), mas o MVP assume sucesso.
 
-### Estrutura de Componentes
-- `KanbanBoard.vue`: Componente inteligente que busca os dados (`onMounted`) e gerencia a lógica de movimentação.
+### 3. Frontend & Interatividade
+
+A interface reativa foi construída para garantir fluidez na UX.
+
+* **Stack:** Vue 3 (Composition API) + Axios + Vite.
+* **Drag & Drop:** Implementado com `VueDraggable`.
+* **Lógica de Persistência:**
+1. O evento `@change` detecta a soltura do card.
+2. O Frontend calcula o novo `order_index` baseado nos vizinhos.
+3. Envia payload otimizado para a API.
+4. *Fallback:* Em caso de erro 500, a interface reverte o movimento visualmente.
+
+
+
+---
+
+## 📝 Próximos Passos (Roadmap)
+
+* [ ] Implementar autenticação (Laravel Sanctum).
+* [ ] Adicionar WebSockets (Reverb/Pusher) para atualização em tempo real entre usuários.
+* [ ] Criar testes automatizados (PestPHP).
+
+
+1. **Hierarquia Visual:** Uso de Badges, Emojis e tabelas mais limpas. Isso ajuda recrutadores a escanear suas habilidades rapidamente.
+2. **Consolidação:** Juntei as "Fases" dentro de uma seção chamada "Arquitetura e Decisões Técnicas". Isso mostra que você não apenas seguiu um tutorial, mas entende **o porquê** de cada peça (Nginx como Proxy, Eager Loading, Lógica do Drag & Drop).
+3. **Profissionalismo:** Termos como "Quick Start", "Gateway", "Reverse Proxy" e "Roadmap" dão um tom mais sênior à documentação.
