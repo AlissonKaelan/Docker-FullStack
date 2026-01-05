@@ -1,137 +1,52 @@
-# 📋 Dockerized Kanban Board
+# 🚀 Docker FullStack Ecosystem: Kanban & Finance
 
-Um sistema de gerenciamento de tarefas estilo Kanban, desenvolvido para consolidar conhecimentos em arquitetura **Full Stack baseada em microsserviços e containers**. O projeto foca em performance, isolamento de ambiente e boas práticas de Engenharia de Software.
+Este repositório contém um ecossistema de aplicações integradas (Gerenciamento de Projetos + Gestão Financeira) desenvolvido com **Laravel API** e **Vue.js 3**, rodando inteiramente em **Docker**.
 
----
+## 🎯 Visão do Projeto (Roadmap)
 
-## 🚀 Instalação e Configuração (Quick Start)
+O objetivo é criar uma plataforma unificada onde o esforço (Tarefas) se conecta ao custo (Finanças), com suporte a múltiplos usuários e colaboração em tempo real.
 
-Se você acabou de clonar o projeto, siga estes passos para ter o ambiente rodando em minutos.
+### 🏗️ Módulos do Sistema
 
-### 1. Subir a Infraestrutura
+#### 1. 🔐 Core & Autenticação (Hub Central)
+- **Login & Registro:** Sistema seguro via Laravel Sanctum.
+- **Menu Unificado:** Dashboard principal que dá acesso aos módulos.
+- **Perfil do Usuário:** Gerenciamento de dados pessoais.
 
-Levanta os containers de API (Laravel), Cliente (Vue), Banco de Dados e Servidor Web.
+#### 2. 📋 Módulo Kanban (Gerenciamento de Tarefas)
+- **Quadros Dinâmicos:** Criação de colunas e tarefas ilimitadas.
+- **Drag & Drop:** Interface reativa para mover cards.
+- **Status Visual:** Identificação de tarefas por cores e etiquetas.
 
-```bash
-docker compose up -d
+#### 3. 💰 Módulo Financeiro (Gestão de Custos)
+- **Transações:** Registro de Entradas e Saídas.
+- **Vínculo com Tarefas:** Associar um custo específico a um Card do Kanban (Ex: "Comprar Domínio" -> R$ 50,00).
+- **Dashboard:** Gráficos de fluxo de caixa e custos por projeto.
 
-```
-
-### 2. Instalar Dependências
-
-Instala os pacotes do PHP (Composer) e do Node.js (NPM) dentro dos containers.
-
-```bash
-docker compose exec backend composer install
-docker compose exec frontend npm install
-
-```
-
-### 3. Setup do Banco de Dados
-
-Roda as migrações para criar as tabelas `columns` e `cards`.
-
-```bash
-docker compose exec backend php artisan migrate
-
-```
-
-> **Acesso:**
-> * 📱 **Aplicação:** [http://localhost:5173](https://www.google.com/search?q=http://localhost:5173)
-> * 🔌 **API (Direto):** [http://localhost:8000](https://www.google.com/search?q=http://localhost:8000)
-> * 🗄️ **PhpMyAdmin:** [http://localhost:8081](https://www.google.com/search?q=http://localhost:8081)
-> 
-> 
+#### 4. 🤝 Colaboração (Social)
+- **Sistema de Convites:** Usuários podem convidar outros por e-mail para participar de um Projeto.
+- **Fluxo de Aceite:** O usuário convidado deve aceitar explicitamente para participar.
+- **Permissões:** Controle do que o convidado pode fazer (Ex: Apenas visualizar ou Editar).
 
 ---
 
-## ⚙️ Workflow de Desenvolvimento
+## 🛠️ Stack Tecnológica
 
-Comandos essenciais para o dia a dia do desenvolvedor.
-
-| Ação | Comando | Descrição |
-| --- | --- | --- |
-| **Iniciar** | `docker compose up -d` | Sobe todos os serviços e libera o terminal. |
-| **Pausar** | `docker compose stop` | Para os containers sem remover (rápido retorno). |
-| **Derrubar** | `docker compose down` | Remove containers e redes (limpeza total). |
-| **Logs API** | `docker compose logs -f backend` | Monitora erros do Laravel em tempo real. |
-| **Logs Front** | `docker compose logs -f frontend` | Monitora compilação do Vite. |
-
-### Acesso aos Terminais (Shell)
-
-Para rodar comandos do artisan ou npm dentro do ambiente:
-
-```bash
-# Terminal do Laravel (Backend)
-docker compose exec backend bash
-# Ex: php artisan make:controller TaskController
-
-# Terminal do Vue (Frontend)
-docker compose exec frontend sh
-# Ex: npm install axios
-
-```
+- **Backend:** PHP 8.2, Laravel 11
+- **Frontend:** Vue.js 3, Composition API, Pinia (State Management), Vue Router
+- **Banco de Dados:** MySQL 8
+- **Infraestrutura:** Docker & Docker Compose (Nginx, PHP-FPM)
+- **Design:** CSS Puro / Flexbox (Futuramente TailwindCSS)
 
 ---
 
-## 🏗️ Arquitetura e Decisões Técnicas
+## 📅 Próximos Passos (Dev Log)
 
-Este projeto foi arquitetado para simular um ambiente de produção escalável. Abaixo, os detalhes de cada camada da aplicação.
-
-### 1. Infraestrutura (Docker)
-
-A arquitetura segue o padrão de microsserviços isolados. Não é necessário ter PHP ou Node instalados na máquina host.
-
-* **App Backend:** PHP 8.2-FPM (Alpine) com extensões GD, BCMath e PDO.
-* **App Frontend:** Node.js (Alpine) rodando servidor Vite.
-* **Database:** MySQL 8.0 com volumes persistentes.
-* **Webserver (Gateway):** Nginx atuando como **Reverse Proxy**, redirecionando o tráfego da porta `8000` para o PHP-FPM.
-
-**Mapeamento de Portas:**
-| Serviço | Host | Container | Função |
-| :--- | :--- | :--- | :--- |
-| **Frontend** | `5173` | `5173` | Hot Reload Vue.js |
-| **API Gateway** | `8000` | `80` | Entrada da API REST |
-| **PhpMyAdmin** | `8081` | `80` | Gestão visual do MySQL |
-
-### 2. Banco de Dados & Backend
-
-A modelagem de dados foi pensada para suportar a ordenação dinâmica do Kanban.
-
-* **Tabelas:**
-* `columns`: Listas do Kanban (To Do, Doing, Done). Possui `order_index`.
-* `cards`: As tarefas em si. Relacionamento `1:N` com colunas.
-
-
-* **Performance:** Utilização de **Eager Loading** (`with('cards')`) na rota `GET /api/kanban` para evitar o problema de N+1 queries.
-* **API Endpoints:**
-* `PUT /api/cards/{id}`: Endpoint inteligente que detecta se o card apenas mudou de posição ou trocou de coluna.
-
-
-
-### 3. Frontend & Interatividade
-
-A interface reativa foi construída para garantir fluidez na UX.
-
-* **Stack:** Vue 3 (Composition API) + Axios + Vite.
-* **Drag & Drop:** Implementado com `VueDraggable`.
-* **Lógica de Persistência:**
-1. O evento `@change` detecta a soltura do card.
-2. O Frontend calcula o novo `order_index` baseado nos vizinhos.
-3. Envia payload otimizado para a API.
-4. *Fallback:* Em caso de erro 500, a interface reverte o movimento visualmente.
-
-
-
----
-
-## 📝 Próximos Passos (Roadmap)
-
-* [ ] Implementar autenticação (Laravel Sanctum).
-* [ ] Adicionar WebSockets (Reverb/Pusher) para atualização em tempo real entre usuários.
-* [ ] Criar testes automatizados (PestPHP).
-
-
-1. **Hierarquia Visual:** Uso de Badges, Emojis e tabelas mais limpas. Isso ajuda recrutadores a escanear suas habilidades rapidamente.
-2. **Consolidação:** Juntei as "Fases" dentro de uma seção chamada "Arquitetura e Decisões Técnicas". Isso mostra que você não apenas seguiu um tutorial, mas entende **o porquê** de cada peça (Nginx como Proxy, Eager Loading, Lógica do Drag & Drop).
-3. **Profissionalismo:** Termos como "Quick Start", "Gateway", "Reverse Proxy" e "Roadmap" dão um tom mais sênior à documentação.
+- [x] Configuração Docker (Nginx, PHP, MySQL, Node)
+- [x] Backend Kanban (CRUD API + Migrations)
+- [x] Frontend Kanban (Vue.js + Drag and Drop)
+- [ ] **Fase 5: Autenticação (Login/Register/Logout)** 🚧 *Em Breve*
+- [ ] **Fase 6:** Isolamento de Dados por Usuário (Multi-tenancy simples)
+- [ ] **Fase 7:** Criação do Módulo Financeiro
+- [ ] **Fase 8:** Integração Tarefa <-> Custo
+- [ ] **Fase 9:** Sistema de Convites e Colaboração
