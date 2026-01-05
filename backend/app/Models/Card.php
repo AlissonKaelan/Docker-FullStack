@@ -9,12 +9,17 @@ class Card extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'description', 'column_id', 'order_index'];
+    // Adicionado 'percentage'
+    protected $fillable = ['title', 'description', 'column_id', 'order_index', 'percentage'];
 
-    // ADICIONE ESTA FUNÇÃO:
     public function column()
     {
-        // Um cartão "Pertence A" uma coluna
         return $this->belongsTo(Column::class);
+    }
+
+    // NOVO: Relacionamento com Subtarefas
+    public function subtasks()
+    {
+        return $this->hasMany(Subtask::class);
     }
 }
