@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 // Importar os componentes
 import LoginView from '../views/LoginView.vue'
 import KanbanBoard from '../components/KanbanBoard.vue'
-import FinanceView from '../views/FinanceView.vue' // <--- Nome padronizado
+import FinanceView from '../views/FinanceView.vue' 
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
