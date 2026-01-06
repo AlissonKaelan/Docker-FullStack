@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\KanbanController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\TransactionController;
 
 // --- ROTAS PÚBLICAS (Aberta para todos) ---
 Route::post('/register', [AuthController::class, 'register']);
@@ -35,5 +36,9 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::post('/subtasks', [KanbanController::class, 'storeSubtask']);
     Route::put('/subtasks/{id}', [KanbanController::class, 'updateSubtask']);
+
+    // Rotas de Finanças
+    Route::get('/transactions', [TransactionController::class, 'index']);
+    Route::post('/transactions', [TransactionController::class, 'store']);
 
 });
