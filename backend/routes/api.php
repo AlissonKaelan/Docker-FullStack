@@ -40,5 +40,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Rotas de Finanças
     Route::get('/transactions', [TransactionController::class, 'index']);
     Route::post('/transactions', [TransactionController::class, 'store']);
+    Route::get('/balance', [TransactionController::class, 'balance']);
+    Route::put('/transactions/{transaction}', [TransactionController::class, 'update']);
+    Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy']);
 
 });
