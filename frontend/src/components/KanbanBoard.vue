@@ -153,14 +153,7 @@ onMounted(() => {
 
 <template>
   <div class="container">
-    <div class="top-bar">
-      <div class="user-info">
-        <h3>🚀 Painel de Projetos</h3>
-        <span class="welcome">Usuário: <strong>{{ auth.user?.name }}</strong></span>
-      </div>
-      <button @click="auth.logout()" class="btn-danger">Sair</button>
-    </div>
-
+    <router-link to="/home" class="back-link">⬅ Voltar ao Início</router-link>
     <div v-if="errorMessage" class="error-banner">{{ errorMessage }}</div>
 
     <div class="controls-area">
@@ -340,6 +333,14 @@ textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6p
 .subtask-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f9f9f9; }
 .completed-text { text-decoration: line-through; color: #9ca3af; }
 .add-subtask input { width: 100%; padding: 8px; margin-top: 10px; border: 1px dashed #ccc; border-radius: 6px; }
-
+.back-link {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: #666;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.back-link:hover { color: #3b82f6; text-decoration: underline; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
 </style>

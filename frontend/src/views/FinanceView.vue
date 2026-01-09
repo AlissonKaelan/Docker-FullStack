@@ -182,6 +182,7 @@ onMounted(() => {
 
 <template>
   <div class="finance-container">
+    <router-link to="/home" class="back-link">⬅ Voltar ao Início</router-link>
     <h1>💰 Minhas Finanças</h1>
 
     <div class="dashboard">
@@ -364,4 +365,12 @@ onMounted(() => {
   filter: hue-rotate(140deg); /* Truque CSS para mudar cor do emoji ou use color: red se fosse ícone de fonte */
   cursor: pointer;
 }
+.back-link {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: #666;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.back-link:hover { color: #3b82f6; text-decoration: underline; }
 </style>

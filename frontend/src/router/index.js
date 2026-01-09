@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import LoginView from '../views/LoginView.vue'
 import KanbanBoard from '../components/KanbanBoard.vue'
 import FinanceView from '../views/FinanceView.vue' 
+import HomeView from '../views/HomeView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,6 +14,12 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView
+    },
+    {
+      path: '/home',
+      name: 'home',
+      component: HomeView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/kanban',
@@ -29,7 +36,7 @@ const router = createRouter({
     },
     {
       path: '/',
-      redirect: '/kanban'
+      redirect: '/home'
     }
   ]
 })
