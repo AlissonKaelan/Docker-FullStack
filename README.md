@@ -78,3 +78,22 @@ O objetivo é criar uma plataforma unificada onde o esforço (Tarefas) se conect
 2. Suba os containers:
 ```bash
 docker compose up -d
+
+```
+
+3. Instale as dependências (Backend e Frontend):
+
+```bash
+docker compose exec backend composer install
+docker compose exec frontend npm install
+
+```
+
+4. Rode as migrações:
+
+```bash
+docker compose exec backend php artisan migrate
+
+```
+
+5. Acesse: `http://localhost:5173`
