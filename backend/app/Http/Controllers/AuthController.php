@@ -26,6 +26,13 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // Cria automaticamente as 3 colunas para este novo usuário
+        $user->columns()->createMany([
+            ['title' => 'A Fazer', 'slug' => 'todo', 'order' => 1],
+            ['title' => 'Em Progresso', 'slug' => 'doing', 'order' => 2],
+            ['title' => 'Concluído', 'slug' => 'done', 'order' => 3],
+        ]);
+
         // Gerar o Token
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -48,7 +55,7 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->firstOrFail();
 
         // Apaga tokens antigos e cria um novo (segurança extra)
-        $user->tokens()->delete(); 
+        //$user->tokens()->delete(); 
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([

@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Transaction;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -51,5 +52,19 @@ class User extends Authenticatable
     public function transactions()
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    /**
+     * Relacionamento: Um usuário tem muitas colunas.
+     */
+    public function columns()
+    {
+        return $this->hasMany(Column::class);
+    }
+    
+    // Relacionamento com Cards (Tarefas) no futuro:
+    public function cards()
+    {
+        return $this->hasMany(Card::class);
     }
 }

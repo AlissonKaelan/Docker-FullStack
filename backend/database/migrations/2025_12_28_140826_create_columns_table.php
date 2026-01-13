@@ -13,9 +13,15 @@ return new class extends Migration
     {
         Schema::create('columns', function (Blueprint $table) {
             $table->id();
-            $table->string('title'); // Nome da coluna (To Do, Doing...)
-            $table->string('slug')->unique(); // Identificador único (to-do, doing...)
-            $table->integer('order_index')->default(0);// Para ordenar as colunas na tela
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('title');
+            
+            // MUDANÇA 1: Remova ->unique() daqui
+            $table->string('slug'); 
+            
+            // MUDANÇA 2: Mude de 'order_index' para 'order'
+            $table->integer('order')->default(0); 
+            
             $table->timestamps();
         });
     }

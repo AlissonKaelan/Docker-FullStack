@@ -10,7 +10,13 @@ class Card extends Model
     use HasFactory;
 
     // Adicionado 'percentage'
-    protected $fillable = ['title', 'description', 'column_id', 'order_index', 'percentage'];
+    protected $fillable = [
+    'title',
+    'description',
+    'column_id',
+    'order',
+    'percentage'
+];
 
     public function column()
     {

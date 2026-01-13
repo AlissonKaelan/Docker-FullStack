@@ -2,15 +2,25 @@
   <div class="auth-container">
     <div class="auth-card">
       <div class="auth-header">
-        <h1>Bem-vindo</h1>
-        <p>Entre para gerenciar suas tarefas</p>
+        <h1>Criar Conta</h1>
+        <p>Comece a organizar seus projetos</p>
       </div>
 
-      <form @submit.prevent="handleLogin">
+      <form @submit.prevent="handleRegister">
+        <div class="form-group">
+          <label>Nome Completo</label>
+          <input 
+            v-model="form.name" 
+            type="text" 
+            placeholder="Seu nome" 
+            required 
+          />
+        </div>
+
         <div class="form-group">
           <label>E-mail</label>
           <input 
-            v-model="email" 
+            v-model="form.email" 
             type="email" 
             placeholder="seu@email.com" 
             required 
@@ -20,9 +30,19 @@
         <div class="form-group">
           <label>Senha</label>
           <input 
-            v-model="password" 
+            v-model="form.password" 
             type="password" 
-            placeholder="Sua senha" 
+            placeholder="Mínimo 8 caracteres" 
+            required 
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Confirmar Senha</label>
+          <input 
+            v-model="form.password_confirmation" 
+            type="password" 
+            placeholder="Repita a senha" 
             required 
           />
         </div>
@@ -32,12 +52,12 @@
         </div>
 
         <button type="submit" :disabled="loading" class="btn-primary">
-          {{ loading ? 'Entrando...' : 'Entrar' }}
+          {{ loading ? 'Criando...' : 'Registrar' }}
         </button>
       </form>
 
       <div class="auth-footer">
-        Não tem conta? <router-link to="/register">Crie agora</router-link>
+        Já tem conta? <router-link to="/login">Faça Login</router-link>
       </div>
     </div>
   </div>
@@ -49,27 +69,28 @@ import { useRouter } from 'vue-router';
 import http from '../services/http';
 
 const router = useRouter();
-const email = ref('');
-const password = ref('');
+const form = ref({
+  name: '',
+  email: '',
+  password: '',
+  password_confirmation: ''
+});
 const loading = ref(false);
 const errorMessage = ref('');
 
-const handleLogin = async () => {
+const handleRegister = async () => {
   loading.value = true;
   errorMessage.value = '';
 
   try {
-    const response = await http.post('http://localhost:8000/api/login', {
-      email: email.value,
-      password: password.value
-    });
-
+    const response = await http.post('http://localhost:8000/api/register', form.value);
+    
     localStorage.setItem('token', response.data.token);
-    router.push('/'); // Vai para a Home
+    router.push('/'); // Vai para Home
     
   } catch (error) {
     console.error(error);
-    errorMessage.value = 'E-mail ou senha incorretos.';
+    errorMessage.value = error.response?.data?.message || 'Erro ao registrar. Verifique os dados.';
   } finally {
     loading.value = false;
   }

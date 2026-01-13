@@ -3,6 +3,7 @@ import { useAuthStore } from '@/stores/auth'
 
 // Importar os componentes
 import LoginView from '../views/LoginView.vue'
+import RegisterView from '../views/RegisterView.vue'
 import KanbanBoard from '../components/KanbanBoard.vue'
 import FinanceView from '../views/FinanceView.vue' 
 import HomeView from '../views/HomeView.vue'
@@ -11,15 +12,20 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/home',
+      name: 'home',
+      component: HomeView,
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/login',
       name: 'login',
       component: LoginView
     },
     {
-      path: '/home',
-      name: 'home',
-      component: HomeView,
-      meta: { requiresAuth: true }
+      path: '/register',
+      name: 'register',
+      component: RegisterView
     },
     {
       path: '/kanban',

@@ -13,13 +13,14 @@ return new class extends Migration
     {
         Schema::create('cards', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('column_id')->constrained()->onDelete('cascade');
             $table->string('title');
             $table->text('description')->nullable();
-            $table->integer('order_index')->default(0); // Posição do cartão na lista
             
-            // Relacionamento: Um cartão pertence a uma coluna
-            $table->foreignId('column_id')->constrained()->onDelete('cascade');
+            // MUDE DE 'order_index' PARA 'order'
+            $table->integer('order')->default(0); 
             
+            $table->integer('percentage')->default(0);
             $table->timestamps();
         });
     }

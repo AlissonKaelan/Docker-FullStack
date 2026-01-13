@@ -6,18 +6,22 @@ use App\Models\Card;
 use App\Models\Column;
 use App\Models\Subtask;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <--- Importante para pegar o ID do usuário
 
 class KanbanController extends Controller
 {
     public function index()
     {
-        $columns = Column::with(['cards.subtasks' => function ($q) {
-            $q->orderBy('id');
-        }])->with(['cards' => function ($query) {
-            $query->orderBy('order_index');
-        }])
-        ->orderBy('order_index')
-        ->get();
+        // CORREÇÃO 1: Filtra pelo usuário logado e ordena por 'order'
+        $columns = Column::where('user_id', Auth::id())
+            ->with(['cards.subtasks' => function ($q) {
+                $q->orderBy('id');
+            }])
+            ->with(['cards' => function ($query) {
+                $query->orderBy('order'); // <--- Mudado de order_index para order
+            }])
+            ->orderBy('order') // <--- Mudado de order_index para order
+            ->get();
 
         return response()->json($columns);
     }
@@ -26,10 +30,17 @@ class KanbanController extends Controller
     {
         $request->validate(['title' => 'required']);
         $slug = \Illuminate\Support\Str::slug($request->title);
-        $maxOrder = Column::max('order_index');
+        
+        // CORREÇÃO 2: Pega o max 'order' apenas deste usuário
+        $maxOrder = Column::where('user_id', Auth::id())->max('order');
+        
         $column = Column::create([
-            'title' => $request->title, 'slug' => $slug, 'order_index' => $maxOrder + 1
+            'title' => $request->title, 
+            'slug' => $slug, 
+            'order' => $maxOrder + 1, // <--- Mudado para order
+            'user_id' => Auth::id()   // <--- Adicionado user_id (Obrigatório)
         ]);
+        
         return response()->json($column);
     }
 
@@ -38,16 +49,21 @@ class KanbanController extends Controller
         $card = Card::create([
             'title' => $request->title,
             'column_id' => $request->column_id,
-            'order_index' => 999
+            'order' => 999 // <--- Mudado para order
         ]);
         return response()->json($card, 201);
     }
 
-    // --- CORREÇÃO DA LÓGICA DE MOVIMENTAÇÃO ---
+    // --- LÓGICA DE MOVIMENTAÇÃO (Mantida a sua, apenas ajustado nomes se necessário) ---
     public function updateCard(Request $request, $cardId)
     {
         $card = Card::findOrFail($cardId);
         $data = $request->all();
+
+        // Se estiver atualizando a ordem via Drag and Drop
+        if (isset($data['order'])) {
+             $card->order = $data['order'];
+        }
 
         // CENÁRIO 1: ARRASTOU (Mudança de Coluna)
         if (isset($data['column_id']) && $data['column_id'] != $card->column_id) {
@@ -56,8 +72,6 @@ class KanbanController extends Controller
             if ($targetColumn) {
                 // > Para DOING (Em Progresso)
                 if ($targetColumn->slug === 'doing') {
-                    // Só muda a porcentagem para 10 se estava zerada.
-                    // JAMAIS toca nas subtarefas aqui.
                     if ($card->percentage == 0) {
                         $data['percentage'] = 10;
                     }
@@ -65,7 +79,6 @@ class KanbanController extends Controller
                 // > Para DONE (Concluído)
                 elseif ($targetColumn->slug === 'done') {
                     $data['percentage'] = 100;
-                    // Aqui sim, conclui tudo
                     $card->subtasks()->update(['is_completed' => true]);
                 }
                 // > Para TODO (A Fazer)
@@ -83,14 +96,17 @@ class KanbanController extends Controller
                 $targetSlug = 'todo';
             } elseif ($percentage === 100) {
                 $targetSlug = 'done';
-                // Slider em 100% = Conclui subtarefas
                 $card->subtasks()->update(['is_completed' => true]);
             } else {
                 $targetSlug = 'doing';
             }
 
             if (isset($targetSlug)) {
-                $autoCol = Column::where('slug', $targetSlug)->first();
+                // Busca a coluna alvo APENAS DO USUÁRIO ATUAL
+                $autoCol = Column::where('user_id', Auth::id())
+                                 ->where('slug', $targetSlug)
+                                 ->first();
+                                 
                 if ($autoCol && $card->column_id !== $autoCol->id) {
                     $data['column_id'] = $autoCol->id;
                 }
@@ -111,12 +127,9 @@ class KanbanController extends Controller
         return response()->json($subtask);
     }
 
-    // --- CORREÇÃO DO CHECKBOX (UPDATE EXPLÍCITO) ---
     public function updateSubtask(Request $request, $id)
     {
         $subtask = Subtask::findOrFail($id);
-        
-        // Recebe true ou false diretamente do frontend
         $subtask->is_completed = $request->boolean('is_completed');
         $subtask->save();
         
@@ -125,7 +138,7 @@ class KanbanController extends Controller
     
     public function deleteColumn($id)
     {
-        $column = Column::findOrFail($id);
+        $column = Column::where('user_id', Auth::id())->findOrFail($id);
         $column->delete();
         return response()->json(['message' => 'Deletada']);
     }
