@@ -1,30 +1,39 @@
 <template>
-  <div class="home-container">
-    
-    <header class="top-bar">
-      <div>
-        <h3>Olá, {{ user?.name || 'Visitante' }}!</h3>
-        <span class="welcome">Bem-vindo ao seu Hub</span>
+  <div class="home-wrapper">
+    <header class="hero-header">
+      <div class="hero-content">
+        <div class="user-info">
+          <h1>Olá, {{ user?.name || 'Visitante' }}!</h1>
+          <p>Bem-vindo ao seu Hub de Produtividade</p>
+        </div>
+        <button @click="handleLogout" class="btn-logout">
+          Sair
+        </button>
       </div>
-      <button @click="handleLogout" class="btn-danger">Sair</button>
     </header>
 
-    <div class="modules-grid">
-      
-      <div class="module-card kanban" @click="$router.push('/kanban')">
-        <div class="icon">📋</div>
-        <h3>Kanban Board</h3>
-        <p class="status">Gerencie suas tarefas</p>
-        <span class="link">Acessar Quadro &rarr;</span>
-      </div>
+    <div class="main-content">
+      <div class="modules-grid">
+        
+        <div class="module-card kanban-theme" @click="$router.push('/kanban')">
+          <div class="card-icon">📋</div>
+          <div class="card-text">
+            <h3>Kanban Board</h3>
+            <p>Gerencie tarefas e fluxo de trabalho</p>
+          </div>
+          <span class="action-link">Acessar &rarr;</span>
+        </div>
 
-      <div class="module-card finance" @click="$router.push('/finance')">
-        <div class="icon">💰</div>
-        <h3>Financeiro</h3>
-        <p class="status">Controle gastos</p>
-        <span class="link">Ver Extrato &rarr;</span>
-      </div>
+        <div class="module-card finance-theme" @click="$router.push('/finance')">
+          <div class="card-icon">💰</div>
+          <div class="card-text">
+            <h3>Financeiro</h3>
+            <p>Controle entradas, saídas e saldo</p>
+          </div>
+          <span class="action-link">Acessar &rarr;</span>
+        </div>
 
+      </div>
     </div>
   </div>
 </template>
@@ -39,19 +48,14 @@ const user = ref(null);
 
 onMounted(async () => {
   try {
-    const response = await http.get('/user'); // Pega dados do usuário logado
+    const response = await http.get('/user');
     user.value = response.data;
-  } catch (error) {
-    console.error("Erro ao carregar usuário", error);
-  }
+  } catch (error) { console.error(error); }
 });
 
 const handleLogout = async () => {
-  try {
-    await http.post('/logout');
-  } catch (error) {
-    console.error("Erro no logout", error);
-  } finally {
+  try { await http.post('/logout'); } catch (e) {} 
+  finally {
     localStorage.removeItem('token');
     router.push('/login');
   }
@@ -59,87 +63,60 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
-.home-container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 40px 20px;
-  font-family: 'Segoe UI', sans-serif;
-  background: #f0f2f5;
-  min-height: 100vh;
+.home-wrapper { min-height: 100vh; background-color: #f3f4f6; font-family: 'Segoe UI', sans-serif; }
+
+/* HERO HEADER */
+.hero-header {
+  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+  padding: 60px 20px 100px 20px; /* Padding extra embaixo para os cards subirem */
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-/* --- ESTILOS DO CABEÇALHO --- */
-.top-bar { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    background: white; 
-    padding: 20px 30px; 
-    border-radius: 12px; 
-    margin-bottom: 40px; 
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+.hero-content {
+  max-width: 1000px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;
 }
-.welcome { color: #666; font-size: 0.9rem; display: block; margin-top: 5px; }
-h3 { margin: 0; color: #333; font-size: 1.5rem; }
+.hero-content h1 { margin: 0; font-size: 2rem; font-weight: 700; }
+.hero-content p { margin: 5px 0 0 0; opacity: 0.9; font-size: 1.1rem; }
 
-/* Botão Sair */
-.btn-danger { 
-    background: #ffe5e5; 
-    color: #d32f2f; 
-    border: none; 
-    padding: 10px 20px; 
-    border-radius: 8px; 
-    cursor: pointer; 
-    font-weight: 600; 
-    transition: 0.2s; 
+.btn-logout {
+  background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); color: white;
+  padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;
 }
-.btn-danger:hover { background: #ffcccc; }
+.btn-logout:hover { background: rgba(255, 255, 255, 0.3); transform: translateY(-1px); }
 
-/* --- GRID DOS MÓDULOS --- */
-.modules-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 30px;
-}
+/* MAIN CONTENT */
+.main-content { max-width: 1000px; margin: -60px auto 0 auto; padding: 0 20px; }
+
+.modules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; }
 
 .module-card {
-  background: white;
-  border-radius: 16px;
-  padding: 40px 30px;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-  border: 1px solid #f0f0f0;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  background: white; border-radius: 16px; padding: 30px; cursor: pointer;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border: 1px solid transparent;
+  display: flex; align-items: center; gap: 20px; transition: all 0.3s ease; position: relative; overflow: hidden;
 }
 
-.module-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+.module-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+
+.card-icon {
+  font-size: 2.5rem; background: #f3f4f6; width: 70px; height: 70px;
+  display: flex; align-items: center; justify-content: center; border-radius: 12px;
 }
 
-.icon { font-size: 3.5rem; margin-bottom: 20px; }
-.module-card h3 { color: #2c3e50; margin-bottom: 10px; font-size: 1.3rem; }
+.card-text h3 { margin: 0 0 5px 0; color: #1f2937; font-size: 1.25rem; }
+.card-text p { margin: 0; color: #6b7280; font-size: 0.95rem; }
 
-.status {
-  font-size: 1rem;
-  color: #888;
-  margin-bottom: 25px;
+.action-link {
+  position: absolute; bottom: 20px; right: 20px; font-weight: 600; font-size: 0.9rem; opacity: 0; transform: translateX(10px); transition: all 0.3s;
 }
+.module-card:hover .action-link { opacity: 1; transform: translateX(0); }
 
-.link {
-  color: #3b82f6;
-  font-weight: bold;
-  margin-top: auto; /* Empurra para o fundo */
-  font-size: 0.9rem;
-}
+/* THEMES */
+.kanban-theme:hover { border-color: #8b5cf6; }
+.kanban-theme .card-icon { color: #8b5cf6; background: #f5f3ff; }
+.kanban-theme .action-link { color: #8b5cf6; }
 
-/* Bordas coloridas no topo */
-.module-card.kanban { border-top: 6px solid #8b5cf6; } /* Roxo */
-.module-card.finance { border-top: 6px solid #10b981; } /* Verde */
+.finance-theme:hover { border-color: #10b981; }
+.finance-theme .card-icon { color: #10b981; background: #ecfdf5; }
+.finance-theme .action-link { color: #10b981; }
 </style>
