@@ -4,36 +4,103 @@ Este repositório contém um ecossistema de aplicações integradas (Gerenciamen
 
 ## 🎯 Visão do Projeto
 
-O objetivo é criar uma plataforma unificada onde o esforço (Tarefas) se conecta ao custo (Finanças), com suporte a múltiplos usuários e colaboração em tempo real.
+O objetivo é criar uma plataforma unificada onde o esforço (Tarefas) se conecta ao custo (Finanças), com suporte a múltiplos usuários, autenticação robusta e interface moderna.
 
 ### 🏗️ Módulos do Sistema
 
 #### 1. 🔐 Core & Autenticação (Hub Central)
-- **Login & Registro:** Sistema seguro via Laravel Sanctum.
-- **Hub Unificado:** Dashboard "Deus View" que resume saldos e tarefas pendentes.
-- **Isolamento de Dados:** Cada usuário vê apenas suas próprias informações (Multi-tenancy via ID).
+
+* **Login & Registro Moderno:** Design "Split-Screen" com validação visual e feedback instantâneo.
+* **Hub Unificado:** Dashboard com "Hero Header" que centraliza o acesso aos módulos.
+* **Isolamento de Dados:** Arquitetura Multi-tenancy (cada usuário acessa apenas seus dados).
 
 #### 2. 📋 Módulo Kanban (Gerenciamento de Tarefas)
-- **Quadros Dinâmicos:** Criação de colunas e tarefas ilimitadas.
-- **Drag & Drop:** Interface reativa para mover cards (Powered by `vuedraggable`).
-- **Subtarefas:** Checklist interno dentro de cada card com barra de progresso.
+
+* **Quadros Dinâmicos:** Criação/Exclusão de colunas e tarefas ilimitadas.
+* **Drag & Drop:** Movimentação fluida de cards entre colunas (To Do, Doing, Done).
+* **Progresso Granular:** Slider de porcentagem (0-100%) e Checklist de Subtarefas com barra de progresso visual.
+* **Automação:** Cards movidos para "Done" completam automaticamente suas subtarefas.
 
 #### 3. 💰 Módulo Financeiro (Gestão de Custos)
-- **CRUD Completo:** Adicionar, Editar e Excluir transações.
-- **Máscaras e Formatação:** Tratamento inteligente de moeda (BRL) e datas.
-- **Fluxo de Caixa:** Dashboard com Entradas, Saídas e Saldo em tempo real.
+
+* **Dashboard Visual:** Cards de Saldo, Receita e Despesa com design "Glassmorphism".
+* **CRUD Completo:** Adicionar, Editar e Excluir transações com máscaras de moeda (R$) e data automática.
+* **Cálculo em Tempo Real:** O saldo atualiza instantaneamente a cada operação.
 
 ---
 
 ## 🛠️ Stack Tecnológica
 
 | Camada | Tecnologia | Detalhes |
-| :--- | :--- | :--- |
+| --- | --- | --- |
 | **Backend** | PHP 8.2, Laravel 11 | API RESTful, Sanctum, Eloquent ORM |
-| **Frontend** | Vue.js 3 | Composition API, Pinia, Vue Router |
-| **UX/UI** | CSS3, SweetAlert2 | Flexbox, Grid, Alertas animados |
-| **Banco** | MySQL 8 | Relacionamentos e Agregações |
-| **DevOps** | Docker | Nginx, PHP-FPM, Node Container |
+| **Frontend** | Vue.js 3 | Composition API, Pinia, Vue Router, Axios Custom |
+| **UX/UI** | CSS3 Scoped | Flexbox, Grid, Gradientes Modernos, Animações |
+| **Banco** | MySQL 8 | Relacionamentos (One-to-Many) e Migrations |
+| **DevOps** | Docker | Nginx, PHP-FPM, Node Container (Vite) |
+
+---
+
+## 🕹️ Guia de Comandos (Ciclo de Vida)
+
+Aqui estão os comandos essenciais para operar o projeto no dia a dia.
+
+### 🟢 1. Iniciar a Aplicação
+
+Rode este comando para subir os containers em segundo plano (modo *detach*).
+
+```bash
+docker compose up -d
+
+```
+
+*Acesse em: `http://localhost:5173*`
+
+### ⏸️ 2. Pausar a Aplicação
+
+Este comando para os containers mas mantém o estado da memória. Útil para pausas curtas.
+
+```bash
+docker compose stop
+
+```
+
+*(Para voltar, basta rodar o comando de iniciar novamente)*
+
+### 🔴 3. Finalizar (Desligar Tudo)
+
+Este comando para e remove os containers e redes criadas. Use ao terminar o dia de trabalho.
+
+```bash
+docker compose down
+
+```
+
+### 🛠️ 4. Comandos de Manutenção
+
+Se você baixar atualizações ou mexer no banco de dados, use:
+
+**Instalar Dependências (Se houver novidades no `composer.json` ou `package.json`):**
+
+```bash
+docker compose exec backend composer install
+docker compose exec frontend npm install
+
+```
+
+**Rodar Migrations (Atualizar o Banco):**
+
+```bash
+docker compose exec backend php artisan migrate
+
+```
+
+**Resetar Banco do Zero (Cuidado: Apaga tudo!):**
+
+```bash
+docker compose exec backend php artisan migrate:fresh
+
+```
 
 ---
 
@@ -42,58 +109,66 @@ O objetivo é criar uma plataforma unificada onde o esforço (Tarefas) se conect
 ### Rotas Principais (Requer `Bearer Token`)
 
 | Método | Endpoint | Descrição |
-| :--- | :--- | :--- |
-| **GET** | `/kanban` | Retorna colunas e cards do usuário logado |
-| **POST** | `/cards` | Cria nova tarefa no quadro |
-| **GET** | `/transactions` | Lista o histórico financeiro |
-| **GET** | `/balance` | Retorna o objeto `{ income, expense, balance }` |
-| **DELETE**| `/transactions/{id}` | Remove uma transação e recalcula saldo |
+| --- | --- | --- |
+| **GET** | `/kanban` | Retorna estrutura completa (Colunas -> Cards -> Subtasks) |
+| **POST** | `/cards` | Cria nova tarefa vinculada a uma coluna |
+| **PUT** | `/cards/{id}` | Atualiza título, descrição, ordem ou porcentagem |
+| **POST** | `/subtasks` | Adiciona um item de checklist ao card |
+| **GET** | `/balance` | Retorna o objeto financeiro consolidado |
 
 ---
 
 ## 📅 Dev Log (Roadmap)
 
 ### ✅ Concluído
-- [x] Configuração Docker (Nginx, PHP, MySQL, Node)
-- [x] Backend Kanban (CRUD API + Migrations)
-- [x] Frontend Kanban (Vue.js + Drag and Drop)
-- [x] Autenticação (Login/Register/Logout com Sanctum)
-- [x] Isolamento de Dados (Cada usuário vê apenas o seu)
-- [x] **Hub Central:** Tela inicial com resumo dos módulos
-- [x] **Módulo Financeiro:** CRUD e Dashboard de Saldo
 
-### 🚧 Em Desenvolvimento
-- [ ] **Gráficos Visuais:** Implementação de Chart.js no Financeiro
-- [ ] **Integração:** Vincular um custo a um Card do Kanban
+* [x] Configuração Docker (Nginx, PHP, MySQL, Node)
+* [x] **Backend:** CRUD Kanban, Subtarefas, Financeiro e Auth
+* [x] **Frontend:** Integração total com Axios Service (`http.js`)
+* [x] **UX/UI:** Redesign completo (Login Split, Home Hero, Cards Modernos)
+* [x] **Features:** Drag & Drop, Checklists, Filtros de Moeda
+
+### 🚧 Em Correção / Desenvolvimento
+
+* [ ] Correção da tabela `subtasks` (Migration criada)
+* [ ] Persistência de token no Axios (Correção do refresh)
 
 ### 🔮 Futuro
-- [ ] Sistema de Convites e Colaboração em Equipe
-- [ ] Deploy em servidor Linux (VPS)
+
+* [ ] Gráficos Visuais (Chart.js) no Financeiro
+* [ ] Vincular um Custo Financeiro a um Card do Kanban
+* [ ] Deploy em servidor Linux (VPS)
 
 ---
 
-## 🚀 Como Rodar o Projeto
+## 🚀 Instalação Inicial (Primeira vez)
 
 1. Clone o repositório.
-2. Suba os containers:
+2. Copie o arquivo de ambiente:
+```bash
+cp backend/.env.example backend/.env
+
+```
+
+
+3. Suba os containers:
 ```bash
 docker compose up -d
 
 ```
 
-3. Instale as dependências (Backend e Frontend):
 
+4. Instale dependências e gere a chave:
 ```bash
 docker compose exec backend composer install
+docker compose exec backend php artisan key:generate
 docker compose exec frontend npm install
 
 ```
 
-4. Rode as migrações:
 
+5. Crie as tabelas no banco:
 ```bash
 docker compose exec backend php artisan migrate
 
 ```
-
-5. Acesse: `http://localhost:5173`
