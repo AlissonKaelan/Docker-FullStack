@@ -44,4 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/transactions/{transaction}', [TransactionController::class, 'update']);
     Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy']);
 
+    // Rotas de Tarefas Diárias
+    Route::apiResource('daily', \App\Http\Controllers\DailyTaskController::class);
+    Route::post('/daily/reset', [\App\Http\Controllers\DailyTaskController::class, 'resetDay']);
 });

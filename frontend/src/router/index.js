@@ -7,6 +7,8 @@ import RegisterView from '../views/RegisterView.vue'
 import KanbanBoard from '../components/KanbanBoard.vue'
 import FinanceView from '../views/FinanceView.vue' 
 import HomeView from '../views/HomeView.vue'
+import DailyView from '../views/DailyView.vue'
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -43,6 +45,11 @@ const router = createRouter({
     {
       path: '/',
       redirect: '/home'
+    },
+    {
+      path: '/daily',
+      name: 'daily',
+      component: DailyView
     }
   ]
 })

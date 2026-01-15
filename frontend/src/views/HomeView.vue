@@ -33,6 +33,15 @@
           <span class="action-link">Acessar &rarr;</span>
         </div>
 
+        <div class="module-card daily-theme" @click="$router.push('/daily')">
+          <div class="card-icon">☀️</div>
+          <div class="card-text">
+            <h3>Atividades Diárias</h3>
+            <p>Checklist rápido para seu dia</p>
+          </div>
+          <span class="action-link">Acessar &rarr;</span>
+        </div>
+
       </div>
     </div>
   </div>
@@ -119,4 +128,8 @@ const handleLogout = async () => {
 .finance-theme:hover { border-color: #10b981; }
 .finance-theme .card-icon { color: #10b981; background: #ecfdf5; }
 .finance-theme .action-link { color: #10b981; }
+
+.daily-theme:hover { border-color: #f59e0b; }
+.daily-theme .card-icon { color: #f59e0b; background: #fef3c7; }
+.daily-theme .action-link { color: #f59e0b; }
 </style>
