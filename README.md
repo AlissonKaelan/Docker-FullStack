@@ -1,10 +1,10 @@
 # 🚀 Docker FullStack Ecosystem: Kanban & Finance
 
-Este repositório contém um ecossistema de aplicações integradas (Gerenciamento de Projetos + Gestão Financeira) desenvolvido com **Laravel API** e **Vue.js 3**, rodando inteiramente em **Docker**.
+Este repositório contém um ecossistema de aplicações integradas (Gerenciamento de Projetos + Gestão Financeira + Hábitos) desenvolvido com **Laravel API** e **Vue.js 3**, rodando inteiramente em **Docker**.
 
 ## 🎯 Visão do Projeto
 
-O objetivo é criar uma plataforma unificada onde o esforço (Tarefas) se conecta ao custo (Finanças), com suporte a múltiplos usuários, autenticação robusta e interface moderna.
+O objetivo é criar uma plataforma unificada onde o esforço (Tarefas) se conecta ao custo (Finanças) e à rotina diária (Hábitos), com suporte a múltiplos usuários, autenticação robusta e interface moderna.
 
 ### 🏗️ Módulos do Sistema
 
@@ -26,6 +26,12 @@ O objetivo é criar uma plataforma unificada onde o esforço (Tarefas) se conect
 * **Dashboard Visual:** Cards de Saldo, Receita e Despesa com design "Glassmorphism".
 * **CRUD Completo:** Adicionar, Editar e Excluir transações com máscaras de moeda (R$) e data automática.
 * **Cálculo em Tempo Real:** O saldo atualiza instantaneamente a cada operação.
+
+#### 4. ☀️ Módulo Diário (Hábitos & To-Do)
+
+* **Foco Diário:** Lista de tarefas rápida com barra de progresso.
+* **Hábitos Recorrentes:** Funcionalidade de tarefas que se repetem (ex: Beber Água).
+* **Reset Automático:** Botão para iniciar um novo dia, limpando tarefas concluídas e resetando os hábitos.
 
 ---
 
@@ -115,6 +121,8 @@ docker compose exec backend php artisan migrate:fresh
 | **PUT** | `/cards/{id}` | Atualiza título, descrição, ordem ou porcentagem |
 | **POST** | `/subtasks` | Adiciona um item de checklist ao card |
 | **GET** | `/balance` | Retorna o objeto financeiro consolidado |
+| **GET** | `/daily` | Lista tarefas diárias e hábitos |
+| **POST** | `/daily/reset` | Reseta hábitos e limpa tarefas do dia anterior |
 
 ---
 
@@ -123,15 +131,16 @@ docker compose exec backend php artisan migrate:fresh
 ### ✅ Concluído
 
 * [x] Configuração Docker (Nginx, PHP, MySQL, Node)
-* [x] **Backend:** CRUD Kanban, Subtarefas, Financeiro e Auth
+* [x] **Backend:** CRUD Kanban, Subtarefas, Financeiro, Daily e Auth
 * [x] **Frontend:** Integração total com Axios Service (`http.js`)
 * [x] **UX/UI:** Redesign completo (Login Split, Home Hero, Cards Modernos)
-* [x] **Features:** Drag & Drop, Checklists, Filtros de Moeda
+* [x] **Features:** Drag & Drop, Checklists, Filtros de Moeda, Hábitos Recorrentes
+* [x] **Fix:** Correção da tabela `subtasks` e Persistência de Token
 
-### 🚧 Em Correção / Desenvolvimento
+### 🚧 Em Desenvolvimento
 
-* [ ] Correção da tabela `subtasks` (Migration criada)
-* [ ] Persistência de token no Axios (Correção do refresh)
+* [ ] Refatoração e limpeza de código
+* [ ] Testes automatizados
 
 ### 🔮 Futuro
 
