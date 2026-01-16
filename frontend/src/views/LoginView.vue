@@ -1,6 +1,16 @@
 <template>
   <div class="split-screen">
     <div class="left-panel">
+      <div 
+        v-for="(img, index) in images" 
+        :key="index"
+        class="bg-image"
+        :style="{ backgroundImage: `url(${img})` }"
+        :class="{ active: currentImageIndex === index }"
+      ></div>
+      
+      <div class="overlay"></div>
+
       <div class="brand-content">
         <h1>Docker FullStack</h1>
         <p class="tagline">Gerencie Projetos e Finanças em um só lugar.</p>
@@ -35,8 +45,8 @@
                 required 
               />
               <button type="button" class="eye-btn" @click="showPassword = !showPassword">
-                <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                <span v-if="showPassword">🙈</span>
+                <span v-else>👁️</span>
               </button>
             </div>
           </div>
@@ -57,18 +67,35 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import http from '../services/http';
 
 const router = useRouter();
 const email = ref('');
 const password = ref('');
-const showPassword = ref(false); // Controle do olhinho
+const showPassword = ref(false);
 const loading = ref(false);
 const errorMessage = ref('');
 
-onMounted(() => { localStorage.removeItem('token'); });
+// --- LÓGICA DO CARROSSEL ---
+const currentImageIndex = ref(0);
+const images = [
+  'https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=1920&auto=format&fit=crop', // Escritório
+  'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1920&auto=format&fit=crop', // Dados/Financeiro
+  'https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=1920&auto=format&fit=crop'  // Código/Tech
+];
+let intervalId;
+
+onMounted(() => { 
+  localStorage.removeItem('token');
+  // Troca de imagem a cada 5 segundos
+  intervalId = setInterval(() => {
+    currentImageIndex.value = (currentImageIndex.value + 1) % images.length;
+  }, 5000);
+});
+
+onUnmounted(() => clearInterval(intervalId));
 
 const handleLogin = async () => {
   loading.value = true;
@@ -89,51 +116,74 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-/* REUTILIZANDO O DESIGN DO LOGIN ANTERIOR */
-.split-screen { display: flex; min-height: 100vh; font-family: 'Segoe UI', sans-serif; background-color: white; }
-.left-panel { flex: 1; background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); display: flex; align-items: center; justify-content: center; color: white; padding: 40px; position: relative; overflow: hidden; }
-.left-panel::before, .left-panel::after { content: ''; position: absolute; background: rgba(255,255,255, 0.1); border-radius: 50%; }
-.left-panel::before { top: -10%; left: -10%; width: 300px; height: 300px; }
-.left-panel::after { bottom: -10%; right: -10%; width: 400px; height: 400px; }
-.brand-content { z-index: 10; max-width: 400px; }
-.brand-content h1 { font-size: 3rem; margin-bottom: 1rem; font-weight: 800; }
-.tagline { font-size: 1.2rem; opacity: 0.9; margin-bottom: 2rem; }
-.features { list-style: none; padding: 0; }
-.features li { font-size: 1.1rem; margin-bottom: 10px; opacity: 0.9; }
+.split-screen { display: flex; min-height: 100vh; font-family: 'Segoe UI', sans-serif; background-color: var(--bg-primary); }
 
-.right-panel { flex: 1; display: flex; align-items: center; justify-content: center; background-color: #f9fafb; }
-.auth-card { width: 100%; max-width: 400px; padding: 40px; }
-.auth-header { margin-bottom: 2rem; }
-.auth-header h2 { font-size: 2rem; color: #1f2937; margin-bottom: 0.5rem; }
-.auth-header p { color: #6b7280; }
-.form-group { margin-bottom: 1.5rem; }
-.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; }
-
-/* --- NOVO CSS DO INPUT DE SENHA --- */
-.password-wrapper { position: relative; display: flex; align-items: center; }
-.password-wrapper input { padding-right: 40px; } /* Espaço para o ícone */
-.eye-btn {
-  position: absolute;
-  right: 10px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #6b7280;
-  display: flex;
-  align-items: center;
-  padding: 0;
+/* --- PAINEL ESQUERDO COM IMAGENS --- */
+.left-panel { 
+  flex: 1; 
+  position: relative; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  color: white; 
+  padding: 40px; 
+  overflow: hidden; 
 }
-.eye-btn:hover { color: #4F46E5; }
 
-/* INPUT PADRÃO */
-input { width: 100%; padding: 0.9rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; outline: none; transition: border 0.2s; box-sizing: border-box; }
-input:focus { border-color: #4F46E5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+/* Imagens de fundo sobrepostas */
+.bg-image {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background-size: cover; background-position: center;
+  opacity: 0; transition: opacity 1.5s ease-in-out; z-index: 1;
+}
+.bg-image.active { opacity: 1; }
 
-.btn-primary { width: 100%; background-color: #4F46E5; color: white; padding: 1rem; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: background 0.2s; }
-.btn-primary:hover { background-color: #4338ca; }
-.error-msg { color: #dc2626; background: #fee2e2; padding: 0.8rem; border-radius: 6px; margin-bottom: 1rem; }
-.auth-footer { margin-top: 1.5rem; text-align: center; color: #6b7280; }
-.auth-footer a { color: #4F46E5; text-decoration: none; font-weight: 600; }
+/* Overlay Escuro (Gradiente) para o texto aparecer bem */
+.overlay {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.9) 0%, rgba(124, 58, 237, 0.8) 100%);
+  z-index: 2;
+}
 
-@media (max-width: 768px) { .split-screen { flex-direction: column; } .left-panel { padding: 30px; text-align: center; } .features { display: none; } }
+.brand-content { z-index: 3; max-width: 450px; text-align: center; }
+.brand-content h1 { font-size: 3.5rem; margin-bottom: 1rem; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+.tagline { font-size: 1.3rem; opacity: 0.95; margin-bottom: 2rem; }
+.features { list-style: none; padding: 0; text-align: left; display: inline-block; }
+.features li { font-size: 1.1rem; margin-bottom: 12px; opacity: 0.9; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+
+/* --- PAINEL DIREITO --- */
+.right-panel { flex: 1; display: flex; align-items: center; justify-content: center; background-color: var(--bg-primary); transition: background-color 0.3s; }
+.auth-card { width: 100%; max-width: 400px; padding: 40px; }
+
+.auth-header { margin-bottom: 2rem; }
+.auth-header h2 { font-size: 2rem; color: var(--text-primary); margin-bottom: 0.5rem; }
+.auth-header p { color: var(--text-secondary); }
+
+.form-group { margin-bottom: 1.5rem; }
+.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary); }
+
+.password-wrapper { position: relative; display: flex; align-items: center; }
+.password-wrapper input { padding-right: 40px; }
+.eye-btn { position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: var(--text-secondary); }
+
+input { 
+  width: 100%; padding: 0.9rem; 
+  border: 1px solid var(--border-color); 
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+  border-radius: 8px; font-size: 1rem; outline: none; transition: all 0.2s; box-sizing: border-box; 
+}
+input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+
+.btn-primary { 
+  width: 100%; background-color: var(--accent-color); color: white; padding: 1rem; 
+  border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: filter 0.2s; 
+}
+.btn-primary:hover { filter: brightness(110%); }
+
+.error-msg { color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 0.8rem; border-radius: 6px; margin-bottom: 1rem; }
+.auth-footer { margin-top: 1.5rem; text-align: center; color: var(--text-secondary); }
+.auth-footer a { color: var(--accent-color); text-decoration: none; font-weight: 600; }
+
+@media (max-width: 768px) { .split-screen { flex-direction: column; } .left-panel { padding: 40px 20px; min-height: 300px; } }
 </style>

@@ -2,8 +2,8 @@
 import { ref, onMounted } from 'vue';
 import draggable from 'vuedraggable';
 import { useAuthStore } from '../stores/auth';
-// MUDANÇA CRÍTICA: Usamos nosso serviço http configurado, não o axios puro
 import http from '../services/http'; 
+import { notify, confirmAction } from '@/utils/alert';
 
 const auth = useAuthStore();
 const columns = ref([]);
@@ -31,7 +31,6 @@ const getStatusColor = (slug) => {
 
 const fetchKanban = async () => {
   try {
-    // URL simplificada (http já tem a base)
     const response = await http.get('/kanban');
     columns.value = response.data;
   } catch (error) {
@@ -49,18 +48,26 @@ const createColumn = async () => {
 };
 
 const deleteColumn = async (id) => {
-  if(!confirm('Tem certeza? Todos os cards desta coluna serão apagados.')) return;
+  const confirmed = await confirmAction(
+    'Apagar Coluna?',
+    'Cuidado: Todas as tarefas dentro desta coluna também serão perdidas para sempre.'
+  );
+  if (!confirmed) return;
+
   try {
     await http.delete(`/columns/${id}`);
+    notify('success', 'Coluna apagada com sucesso.');
     await fetchKanban();
-  } catch (error) { handleError(error); }
+  } catch (error){
+    notify('error', 'Não foi possível apagar a coluna.');
+    handleError(error);
+  }
 };
 
 const createCard = async () => {
   if (!newCardTitle.value.trim()) return;
-  // Proteção: Se não houver colunas, não tenta criar card
   if (columns.value.length === 0) {
-      alert("Crie uma coluna antes de adicionar tarefas!");
+      notify('warning', "Crie uma coluna antes de adicionar tarefas!");
       return;
   }
   
@@ -82,9 +89,8 @@ const onCardDrop = async (event, columnId) => {
     try {
       await http.put(`/cards/${item.id}`, {
         column_id: columnId,
-        order: newIndex + 1 // Ajustado para 'order' conforme backend
+        order: newIndex + 1 
       });
-      
       await fetchKanban(); 
     } catch (error) { 
         console.error(error); 
@@ -96,7 +102,6 @@ const onCardDrop = async (event, columnId) => {
 // --- MODAL & LÓGICA ---
 
 const openCardModal = (card) => {
-  // Clona o objeto para evitar reatividade imediata sem salvar
   selectedCard.value = JSON.parse(JSON.stringify(card)); 
   showModal.value = true;
 };
@@ -123,7 +128,6 @@ const addSubtask = async () => {
     if (!selectedCard.value.subtasks) selectedCard.value.subtasks = [];
     selectedCard.value.subtasks.push(response.data);
     newSubtaskTitle.value = '';
-    // Atualiza o fundo também
     await fetchKanban();
   } catch (error) { handleError(error); }
 };
@@ -133,7 +137,6 @@ const updateSubtaskStatus = async (subtask) => {
     await http.put(`/subtasks/${subtask.id}`, {
       is_completed: subtask.is_completed
     });
-    // Atualiza o kanban principal para refletir a contagem na lista
     await fetchKanban();
   } catch (error) { 
     handleError(error);
@@ -144,7 +147,6 @@ const updateSubtaskStatus = async (subtask) => {
 const handleError = (error) => {
   console.error(error);
   if (error.response && error.response.status === 401) {
-    // Se der 401, o http.js já vai redirecionar, mas garantimos aqui
     errorMessage.value = "Sessão expirada.";
   } else {
     errorMessage.value = 'Erro: ' + (error.response?.data?.message || error.message);
@@ -159,8 +161,10 @@ onMounted(() => {
 <template>
   <div class="kanban-container">
     <div class="page-header">
-        <router-link to="/" class="back-btn">⬅ Voltar</router-link>
-        <h1>Gestão de Tarefas</h1>
+        <div class="header-left">
+            <router-link to="/" class="back-btn">⬅ Voltar</router-link>
+            <h1>Gestão de Tarefas</h1>
+        </div>
     </div>
 
     <div v-if="errorMessage" class="error-banner">{{ errorMessage }}</div>
@@ -259,80 +263,97 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* GERAL */
-.kanban-container { padding: 40px; max-width: 1400px; margin: 0 auto; font-family: 'Segoe UI', sans-serif; background: #f3f4f6; min-height: 100vh; }
-.page-header { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
-.page-header h1 { margin: 0; font-size: 1.8rem; color: #1f2937; }
-.back-btn { text-decoration: none; color: #6b7280; font-weight: 600; padding: 8px 12px; background: white; border-radius: 6px; font-size: 0.9rem; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-.back-btn:hover { background: #e5e7eb; color: #1f2937; }
+/* APLICANDO AS VARIÁVEIS GLOBAIS PARA TEMA ESCURO */
+.kanban-container { 
+    padding: 20px; 
+    max-width: 100%; 
+    margin: 0 auto; 
+    font-family: 'Segoe UI', sans-serif; 
+    background: var(--bg-primary); /* Fundo dinâmico */
+    min-height: 100vh; 
+    transition: background-color 0.3s;
+}
 
-/* CONTROLES */
+.page-header h1 { margin: 0; font-size: 1.8rem; color: var(--text-primary); }
+
+.back-btn { 
+    text-decoration: none; color: var(--text-secondary); font-weight: 600; 
+    padding: 8px 12px; background: var(--bg-secondary); border-radius: 6px; 
+    font-size: 0.9rem; transition: 0.2s; box-shadow: 0 1px 2px var(--shadow-color); border: 1px solid var(--border-color);
+}
+.back-btn:hover { background: var(--border-color); color: var(--text-primary); }
+
 .controls-area { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
-.input-group { display: flex; gap: 10px; flex: 1; min-width: 300px; background: white; padding: 10px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.input-group { display: flex; gap: 10px; flex: 1; min-width: 280px; background: var(--bg-secondary); padding: 10px; border-radius: 12px; box-shadow: 0 2px 4px var(--shadow-color); border: 1px solid var(--border-color); }
 
-.input-modern { flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; outline: none; transition: border 0.2s; }
-.input-modern:focus { border-color: #4F46E5; }
+.input-modern { 
+    flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; transition: border 0.2s; 
+    background-color: var(--input-bg); color: var(--text-primary);
+}
+.input-modern:focus { border-color: var(--accent-color); }
 .full-width { width: 100%; box-sizing: border-box; }
 
 button { border: none; border-radius: 8px; cursor: pointer; font-weight: 600; padding: 10px 20px; transition: 0.2s; white-space: nowrap; }
-.btn-primary { background: #4F46E5; color: white; }
-.btn-primary:hover { background: #4338ca; }
+.btn-primary { background: var(--accent-color); color: white; }
+.btn-primary:hover { filter: brightness(110%); }
 .btn-secondary { background: #8b5cf6; color: white; }
-.btn-secondary:hover { background: #7c3aed; }
-.btn-small { padding: 2px 8px; background: transparent; color: #9ca3af; font-size: 20px; }
+.btn-secondary:hover { filter: brightness(110%); }
+.btn-small { padding: 2px 8px; background: transparent; color: var(--text-secondary); font-size: 20px; }
 .btn-small:hover { color: #ef4444; }
 
-/* BOARD */
-.board { display: flex; overflow-x: auto; gap: 25px; padding-bottom: 20px; align-items: flex-start; height: calc(100vh - 200px); }
-
-.column { 
-    background: #f9fafb; min-width: 320px; width: 320px; border-radius: 12px; display: flex; flex-direction: column; 
-    border: 1px solid #e5e7eb; max-height: 100%; 
+.board { 
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+    gap: 25px; padding-bottom: 40px; align-items: start; 
 }
 
-.column-header { padding: 15px; background: white; border-bottom: 1px solid #e5e7eb; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; border-top: 4px solid transparent; }
-.header-text { display: flex; align-items: center; gap: 10px; }
-.header-text h3 { margin: 0; font-size: 1rem; color: #374151; font-weight: 700; }
-.badge { background: #e5e7eb; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; color: #4b5563; }
+.column { 
+    background: var(--bg-primary); /* Coluna levemente diferente do fundo */
+    border: 1px solid var(--border-color);
+    width: 100%; border-radius: 12px; display: flex; flex-direction: column; max-height: 85vh; 
+}
+
+.column-header { 
+    padding: 15px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); 
+    border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; border-top: 4px solid transparent; 
+}
+.header-text h3 { margin: 0; font-size: 1rem; color: var(--text-primary); font-weight: 700; }
+.badge { background: var(--border-color); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; color: var(--text-secondary); }
 
 .column-body { padding: 15px; overflow-y: auto; flex: 1; min-height: 100px; }
+.column-body::-webkit-scrollbar { width: 6px; }
+.column-body::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 3px; }
 
-/* Status Colors */
+/* CORES DOS STATUS (MANTÉM CORES FIXAS) */
 .status-blue { border-top-color: #3b82f6; }
 .status-orange { border-top-color: #f59e0b; }
 .status-green { border-top-color: #10b981; }
 .status-purple { border-top-color: #8b5cf6; }
 
 /* CARDS */
-.card { background: white; padding: 15px; margin-bottom: 12px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: grab; border: 1px solid transparent; transition: all 0.2s; }
-.card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-color: #4F46E5; }
-.card:active { cursor: grabbing; }
-.card-title { font-weight: 600; color: #1f2937; margin-bottom: 8px; font-size: 0.95rem; }
-.card-meta { display: flex; gap: 8px; flex-wrap: wrap; }
-.meta-tag { background: #eff6ff; color: #3b82f6; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-.meta-tag.done { background: #ecfdf5; color: #10b981; }
+.card { 
+    background: var(--bg-secondary); 
+    padding: 15px; margin-bottom: 12px; border-radius: 8px; box-shadow: 0 1px 3px var(--shadow-color); 
+    cursor: grab; border: 1px solid var(--border-color); transition: all 0.2s; 
+}
+.card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px var(--shadow-color); border-color: var(--accent-color); }
+.card-title { font-weight: 600; color: var(--text-primary); margin-bottom: 8px; font-size: 0.95rem; }
 
 /* MODAL */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(2px); }
-.modal-content { background: white; width: 600px; max-width: 90%; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); overflow: hidden; }
-.modal-header { padding: 20px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; background: #f9fafb; }
-.modal-header h2 { margin: 0; font-size: 1.25rem; color: #1f2937; }
-.close-btn { background: none; border: none; font-size: 1.5rem; color: #6b7280; cursor: pointer; padding: 0; }
-.modal-body { padding: 30px; max-height: 70vh; overflow-y: auto; }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(2px); }
+.modal-content { 
+    background: var(--bg-secondary); 
+    width: 600px; max-width: 90%; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); 
+    overflow: hidden; max-height: 90vh; display: flex; flex-direction: column; border: 1px solid var(--border-color);
+}
+.modal-header { 
+    padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary); 
+}
+.modal-header h2 { margin: 0; font-size: 1.25rem; color: var(--text-primary); }
+.close-btn { background: none; border: none; font-size: 1.5rem; color: var(--text-secondary); cursor: pointer; padding: 0; }
+.modal-body { padding: 30px; overflow-y: auto; flex: 1; color: var(--text-primary); }
 
-.form-group { margin-bottom: 20px; }
-.form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: #374151; font-size: 0.9rem; }
-
-.slider { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: #e5e7eb; outline: none; background-image: linear-gradient(#4F46E5, #4F46E5); background-repeat: no-repeat; }
-.slider::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: #4F46E5; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid white; transition: transform 0.1s; }
-.slider::-webkit-slider-thumb:hover { transform: scale(1.1); }
-
-.subtasks-section { margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px; }
-.subtasks-section h4 { margin: 0 0 15px 0; color: #4b5563; font-size: 1rem; }
-.subtask-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
-.subtask-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: #10b981; cursor: pointer; }
-.completed-text { text-decoration: line-through; color: #9ca3af; }
-.add-subtask { margin-top: 15px; }
-
-.error-banner { background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+.form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); font-size: 0.9rem; }
+.subtasks-section h4 { margin: 0 0 15px 0; color: var(--text-secondary); font-size: 1rem; }
+.completed-text { text-decoration: line-through; color: var(--text-secondary); }
 </style>
