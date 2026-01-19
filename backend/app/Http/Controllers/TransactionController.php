@@ -2,99 +2,139 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Transaction;
-
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
+use Illuminate\Support\Str;
 class TransactionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        /** @var \App\Models\User $user */
-        $user = auth()->user();
+        $query = Transaction::where('user_id', Auth::id());
 
-        return response()->json(
-            $user->transactions()->orderBy('transaction_date', 'desc')->get()
-        );
+        // --- FILTRO DE DATA (Mês e Ano) ---
+        if ($request->has('month') && $request->has('year')) {
+            $query->whereMonth('transaction_date', $request->month)
+                  ->whereYear('transaction_date', $request->year);
+        } else {
+            // Padrão: Se não enviar filtro, pega o mês atual
+            $query->whereMonth('transaction_date', Carbon::now()->month)
+                  ->whereYear('transaction_date', Carbon::now()->year);
+        }
+
+        return $query->orderBy('transaction_date', 'desc')->get();
+    }
+
+    public function balance(Request $request)
+    {
+        // O saldo também precisa respeitar o filtro de data para mostrar "Saldo do Mês"
+        $query = Transaction::where('user_id', Auth::id());
+
+        if ($request->has('month') && $request->has('year')) {
+            $query->whereMonth('transaction_date', $request->month)
+                  ->whereYear('transaction_date', $request->year);
+        } else {
+            $query->whereMonth('transaction_date', Carbon::now()->month)
+                  ->whereYear('transaction_date', Carbon::now()->year);
+        }
+
+        $transactions = $query->get();
+
+        return response()->json([
+            'income' => $transactions->where('type', 'income')->sum('amount'),
+            'expense' => $transactions->where('type', 'expense')->sum('amount'),
+            'balance' => $transactions->where('type', 'income')->sum('amount') - $transactions->where('type', 'expense')->sum('amount')
+        ]);
     }
 
     public function store(Request $request)
     {
-        // 1. VALIDAÇÃO (A "Porta de Aço")
-        // Garante que o dado só entra se estiver perfeito
-        $validated = $request->validate([
-            'description' => 'required|string|max:255',
-            'amount' => 'required|numeric|min:0.01', // Evita valores negativos ou zero
-            'type' => 'required|in:income,expense', // Só aceita esses dois valores
+        $request->validate([
+            'description' => 'required',
+            'amount' => 'required|numeric',
+            'type' => 'required',
             'transaction_date' => 'required|date'
         ]);
 
-        // 2. CRIAÇÃO SEGURA
-        // Usamos o relacionamento para criar. O Laravel preenche o 'user_id' sozinho!
-        // Não precisa fazer $data['user_id'] = auth()->id();
-        $transaction = auth()->user()->transactions()->create($validated);
+        $installments = (int) $request->input('installments', 1);
+        $totalAmount = $request->input('amount');
+        $baseDate = Carbon::parse($request->input('transaction_date'));
+        
+        $batchId = $installments > 1 ? Str::uuid() : null;
 
-        return response()->json($transaction, 201);
+        if ($installments > 1 && $request->type === 'expense') {
+            // Calcula o valor da parcela (ex: 100 / 3 = 33.3333...)
+            // Precisamos arredondar para 2 casas para não dar erro no banco
+            $amountPerShare = round($totalAmount / $installments, 2);
+            
+            // Opcional: Ajuste de centavos na última parcela (ex: 33.33 + 33.33 + 33.34 = 100.00)
+            // Se quiser simples, mantenha como está, mas pode dar diferença de centavos.
+            
+            for ($i = 0; $i < $installments; $i++) {
+                $date = $baseDate->copy()->addMonthsNoOverflow($i);
+                
+                Transaction::create([
+                    'description' => $request->description . " (" . ($i + 1) . "/$installments)",
+                    'amount' => $amountPerShare,
+                    'type' => $request->type,
+                    'transaction_date' => $date,
+                    'user_id' => Auth::id(),
+                    'batch_id' => $batchId
+                ]);
+            }
+            return response()->json(['message' => 'Compra parcelada registrada!'], 201);
+        } else {
+            $transaction = Transaction::create([
+                'description' => $request->description,
+                'amount' => $totalAmount,
+                'type' => $request->type,
+                'transaction_date' => $request->transaction_date,
+                'user_id' => Auth::id(),
+                'batch_id' => null
+            ]);
+            return response()->json($transaction, 201);
+        }
     }
 
-    public function balance() // Removi o Request $request pois não estamos usando dados de entrada
+    public function update(Request $request, $id)
     {
-        /** @var \App\Models\User $user */
-        $user = auth()->user();
-
-        // Total de Entradas
-        $income = $user->transactions()
-            ->where('type', 'income')
-            ->sum('amount');
-
-        // Total de Saídas (CORREÇÃO AQUI: Troquei - por ->)
-        $expense = $user->transactions()
-            ->where('type', 'expense')
-            ->sum('amount');
-
-        // Cálculo Matemático
-        $balance = $income - $expense;
-
-        return response()->json([
-            'income' => floatval($income), // Garante que seja número
-            'expense' => floatval($expense),
-            'balance' => floatval($balance)
-        ]);
-    }
-
-    public function update(Request $request, Transaction $transaction)
-    {
-        // 1. SEGURANÇA (Authorization)
-        // Verifica se a transação pertence ao usuário logado.
-        // Se eu tentar editar a transação do vizinho, recebo erro 403 (Proibido).
-        if ($transaction->user_id !== auth()->id()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        $transaction = Transaction::where('user_id', Auth::id())->findOrFail($id);
+        
+        // Se o usuário pediu para atualizar TODAS as parcelas e existe um batch_id
+        if ($request->boolean('update_all') && $transaction->batch_id) {
+            
+            // Atualiza todas que têm o mesmo batch_id
+            // OBS: Não mudamos a data em lote para não encavalar tudo no mesmo mês
+            Transaction::where('batch_id', $transaction->batch_id)
+                ->where('user_id', Auth::id())
+                ->update([
+                    'description' => $request->description, // Cuidado: isso tira o (1/3) do nome se não tratar
+                    'amount' => $request->amount,
+                    'type' => $request->type
+                ]);
+                
+            return response()->json(['message' => 'Lote atualizado']);
         }
 
-        // 2. VALIDAÇÃO (Reaproveitamos a mesma lógica do store)
-        $validated = $request->validate([
-            'description' => 'required|string|max:255',
-            'amount' => 'required|numeric|min:0.01',
-            'type' => 'required|in:income,expense',
-            'transaction_date' => 'required|date'
-        ]);
 
-        // 3. ATUALIZAÇÃO
-        // O método update() pega o array validado e troca os valores no banco
-        $transaction->update($validated);
-
+        $transaction->update($request->all());
         return response()->json($transaction);
     }
 
-    public function destroy(Transaction $transaction)
+    public function destroy(Request $request, $id)
     {
-        // 1. SEGURANÇA (Authorization)
-        if ($transaction->user_id !== auth()->id()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        $transaction = Transaction::where('user_id', Auth::id())->findOrFail($id);
+
+        // Se pediu para deletar tudo e tem grupo
+        if ($request->boolean('delete_all') && $transaction->batch_id) {
+            Transaction::where('batch_id', $transaction->batch_id)
+                ->where('user_id', Auth::id())
+                ->delete();
+            return response()->json(['message' => 'Todas as parcelas excluídas']);
         }
 
-        // 2. DELEÇÃO
         $transaction->delete();
-
-        return response()->json(['message' => 'Transaction deleted successfully']);
+        return response()->json(['message' => 'Deleted']);
     }
 }

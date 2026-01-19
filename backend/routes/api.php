@@ -39,10 +39,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Rotas de Finanças
     Route::get('/transactions', [TransactionController::class, 'index']);
-    Route::post('/transactions', [TransactionController::class, 'store']);
     Route::get('/balance', [TransactionController::class, 'balance']);
-    Route::put('/transactions/{transaction}', [TransactionController::class, 'update']);
-    Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy']);
+    Route::post('/transactions', [TransactionController::class, 'store']);
+    Route::put('/transactions/{id}', [TransactionController::class, 'update']);
+    Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']);
 
     // Rotas de Tarefas Diárias
     Route::apiResource('daily', \App\Http\Controllers\DailyTaskController::class);

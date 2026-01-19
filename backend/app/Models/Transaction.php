@@ -14,7 +14,8 @@ class Transaction extends Model
         'amount',
         'type',
         'transaction_date',
-        'user_id'
+        'user_id', 
+        'batch_id'
     ];
 
     protected $casts = [
