@@ -47,6 +47,23 @@ const createColumn = async () => {
   } catch (error) { handleError(error); }
 };
 
+const deleteCard = async (id) => {
+  const confirmed = await confirmAction(
+    'Apagar Tarefa?',
+    'Cuidado: Esta ação não pode ser desfeita.'
+  );
+  if (!confirmed) return;
+
+  try {
+    await http.delete(`/cards/${id}`);
+    notify('success', 'Tarefa apagada com sucesso.');
+    await fetchKanban();
+  } catch (error){
+    notify('error', 'Não foi possível apagar a tarefa.');
+    handleError(error);
+  }
+};
+
 const deleteColumn = async (id) => {
   const confirmed = await confirmAction(
     'Apagar Coluna?',
@@ -219,7 +236,17 @@ onMounted(() => {
       <div class="modal-content">
         <div class="modal-header">
           <h2>Editar Tarefa</h2>
-          <button @click="showModal = false" class="close-btn">×</button>
+          <div class="header-actions">
+              <button 
+                  @click="deleteCard(selectedCard.id); showModal = false" 
+                  class="btn-icon-danger" 
+                  title="Excluir Tarefa"
+              >
+                🗑️
+              </button>
+              
+              <button @click="showModal = false" class="close-btn">×</button>
+          </div>
         </div>
 
         <div class="modal-body" v-if="selectedCard">
@@ -356,4 +383,24 @@ button { border: none; border-radius: 8px; cursor: pointer; font-weight: 600; pa
 .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); font-size: 0.9rem; }
 .subtasks-section h4 { margin: 0 0 15px 0; color: var(--text-secondary); font-size: 1rem; }
 .completed-text { text-decoration: line-through; color: var(--text-secondary); }
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.btn-icon-danger {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+    opacity: 0.7;
+}
+
+.btn-icon-danger:hover {
+    transform: scale(1.2);
+    opacity: 1;
+    filter: hue-rotate(140deg); /* Faz ficar avermelhado */
+}
 </style>

@@ -33,6 +33,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Novas Rotas (Colunas e Subtarefas)
     Route::post('/columns', [KanbanController::class, 'storeColumn']); // Criar coluna "Provas"
     Route::delete('/columns/{id}', [KanbanController::class, 'deleteColumn']); 
+
+    Route::delete('/cards/{id}', [KanbanController::class, 'deleteCard']);
     
     Route::post('/subtasks', [KanbanController::class, 'storeSubtask']);
     Route::put('/subtasks/{id}', [KanbanController::class, 'updateSubtask']);

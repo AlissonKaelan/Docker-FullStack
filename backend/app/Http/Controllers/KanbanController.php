@@ -6,7 +6,7 @@ use App\Models\Card;
 use App\Models\Column;
 use App\Models\Subtask;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // <--- Importante para pegar o ID do usuário
+use Illuminate\Support\Facades\Auth;
 
 class KanbanController extends Controller
 {
@@ -37,8 +37,8 @@ class KanbanController extends Controller
         $column = Column::create([
             'title' => $request->title, 
             'slug' => $slug, 
-            'order' => $maxOrder + 1, // <--- Mudado para order
-            'user_id' => Auth::id()   // <--- Adicionado user_id (Obrigatório)
+            'order' => $maxOrder + 1, 
+            'user_id' => Auth::id()   
         ]);
         
         return response()->json($column);
@@ -49,7 +49,7 @@ class KanbanController extends Controller
         $card = Card::create([
             'title' => $request->title,
             'column_id' => $request->column_id,
-            'order' => 999 // <--- Mudado para order
+            'order' => 999
         ]);
         return response()->json($card, 201);
     }
@@ -135,7 +135,17 @@ class KanbanController extends Controller
         
         return response()->json($subtask);
     }
-    
+    public function deleteCard($id)
+    {
+        // Garante que o card pertence a uma coluna do usuário logado (Segurança)
+        $card = Card::whereHas('column', function($q) {
+            $q->where('user_id', Auth::id());
+        })->findOrFail($id);
+
+        $card->delete();
+        
+        return response()->json(['message' => 'Tarefa deletada']);
+    }
     public function deleteColumn($id)
     {
         $column = Column::where('user_id', Auth::id())->findOrFail($id);
