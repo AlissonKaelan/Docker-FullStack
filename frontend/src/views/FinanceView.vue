@@ -2,7 +2,8 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import http from '../services/http'; 
 import { notify, confirmAction } from '@/utils/alert';
-import Swal from 'sweetalert2'; // <--- CORREÇÃO 2: IMPORTAÇÃO NECESSÁRIA
+import Swal from 'sweetalert2';
+import FinanceChart from '../components/FinanceChart.vue';
 
 const transactions = ref([]);
 const amountDisplay = ref('');
@@ -197,28 +198,37 @@ onMounted(() => { fetchData(); });
         </div>
     </div>
 
-    <div class="dashboard-grid">
-      <div class="stat-card income">
-        <div class="icon-circle">⬇</div>
-        <div>
-            <h3>Entradas</h3>
-            <p>{{ formatMoney(balance.income) }}</p>
+    <div class="dashboard-area">
+        
+        <div class="cards-column">
+            <div class="stat-card income">
+                <div class="icon-circle">⬇</div>
+                <div>
+                    <h3>Entradas</h3>
+                    <p>{{ formatMoney(balance.income) }}</p>
+                </div>
+            </div>
+            <div class="stat-card expense">
+                <div class="icon-circle">⬆</div>
+                <div>
+                    <h3>Saídas</h3>
+                    <p>{{ formatMoney(balance.expense) }}</p>
+                </div>
+            </div>
+            <div class="stat-card total" :class="balance.balance >= 0 ? 'pos' : 'neg'">
+                <div class="icon-circle">💰</div>
+                <div>
+                    <h3>Saldo Mês</h3>
+                    <p>{{ formatMoney(balance.balance) }}</p>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="stat-card expense">
-        <div class="icon-circle">⬆</div>
-        <div>
-            <h3>Saídas</h3>
-            <p>{{ formatMoney(balance.expense) }}</p>
+
+        <div class="chart-column">
+            <h3>Visão Geral</h3>
+            <FinanceChart :income="balance.income" :expense="balance.expense" />
         </div>
-      </div>
-      <div class="stat-card total" :class="balance.balance >= 0 ? 'pos' : 'neg'">
-        <div class="icon-circle">💰</div>
-        <div>
-            <h3>Saldo Mês</h3>
-            <p>{{ formatMoney(balance.balance) }}</p>
-        </div>
-      </div>
+
     </div>
 
     <div class="form-section">
@@ -315,30 +325,6 @@ onMounted(() => { fetchData(); });
 }
 .back-btn:hover { background: var(--border-color); color: var(--text-primary); }
 
-/* DASHBOARD */
-.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px; }
-
-.stat-card { 
-    background: var(--bg-secondary); 
-    padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px var(--shadow-color); 
-    display: flex; align-items: center; gap: 15px; border: 1px solid var(--border-color); 
-}
-.stat-card h3 { margin: 0; font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
-.stat-card p { margin: 5px 0 0 0; font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
-
-.icon-circle { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-
-.income .icon-circle { background: #dcfce7; color: #166534; }
-.income p { color: #10b981; }
-
-.expense .icon-circle { background: #fee2e2; color: #991b1b; }
-.expense p { color: #ef4444; }
-
-.total.pos .icon-circle { background: #dbeafe; color: #1e40af; }
-.total.pos p { color: #3b82f6; }
-.total.neg .icon-circle { background: #fef9c3; color: #854d0e; }
-.total.neg p { color: #f59e0b; }
-
 /* FORM */
 .form-section { 
     background: var(--bg-secondary); border-radius: 12px; 
@@ -394,4 +380,56 @@ onMounted(() => { fetchData(); });
 
 .list-enter-active, .list-leave-active { transition: all 0.4s ease; }
 .list-enter-from, .list-leave-to { opacity: 0; transform: translateX(30px); }
+
+/* --- DASHBOARD LAYOUT --- */
+.dashboard-area {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+/* Coluna dos Cards */
+.cards-column {
+    flex: 2; /* Ocupa 2/3 do espaço */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Coluna do Gráfico */
+.chart-column {
+    flex: 1; /* Ocupa 1/3 do espaço */
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+.chart-column h3 {
+    margin: 0 0 15px 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+.stat-card { 
+    background: var(--bg-secondary); 
+    padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px var(--shadow-color); 
+    display: flex; align-items: center; gap: 15px; border: 1px solid var(--border-color);
+    flex: 1; /* Estica para preencher altura se necessário */
+}
+
+
+/* RESPONSIVIDADE */
+@media (max-width: 768px) {
+    .dashboard-area {
+        flex-direction: column-reverse;
+    }
+    .chart-column {
+        min-height: 300px;
+    }
+}
 </style>
