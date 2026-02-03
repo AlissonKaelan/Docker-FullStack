@@ -9,7 +9,10 @@ class Subtask extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['card_id', 'title', 'is_completed'];
+    protected $fillable = [
+        'description', 'amount', 'type', 'transaction_date', 
+        'user_id', 'batch_id', 'category_id'
+    ];
 
     protected $casts = [
         'is_completed' => 'boolean',
@@ -18,5 +21,9 @@ class Subtask extends Model
     public function card()
     {
         return $this->belongsTo(Card::class);
+    }
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
     }
 }
