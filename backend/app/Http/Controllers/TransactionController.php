@@ -54,7 +54,8 @@ class TransactionController extends Controller
             'description' => 'required',
             'amount' => 'required|numeric',
             'type' => 'required',
-            'transaction_date' => 'required|date'
+            'transaction_date' => 'required|date',
+            'category_id' => 'nullable|exists:categories,id'
         ]);
 
         $installments = (int) $request->input('installments', 1);
@@ -91,7 +92,8 @@ class TransactionController extends Controller
                 'type' => $request->type,
                 'transaction_date' => $request->transaction_date,
                 'user_id' => Auth::id(),
-                'batch_id' => null
+                'batch_id' => null,
+                'category_id' => $request->category_id
             ]);
             return response()->json($transaction, 201);
         }
@@ -111,7 +113,8 @@ class TransactionController extends Controller
                 ->update([
                     'description' => $request->description, // Cuidado: isso tira o (1/3) do nome se não tratar
                     'amount' => $request->amount,
-                    'type' => $request->type
+                    'type' => $request->type,
+                    'category_id' => $request->category_id
                 ]);
                 
             return response()->json(['message' => 'Lote atualizado']);

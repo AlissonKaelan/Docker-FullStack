@@ -49,4 +49,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Rotas de Tarefas Diárias
     Route::apiResource('daily', \App\Http\Controllers\DailyTaskController::class);
     Route::post('/daily/reset', [\App\Http\Controllers\DailyTaskController::class, 'resetDay']);
+
+    Route::apiResource('categories', \App\Http\Controllers\CategoryController::class);
 });
