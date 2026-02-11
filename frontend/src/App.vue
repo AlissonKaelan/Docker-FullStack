@@ -52,4 +52,9 @@ body {
   width: 100%;
   background-color: var(--bg-primary);
 }
+
+/* Garante que o alerta fique na frente de qualquer modal */
+.swal2-container {
+  z-index: 99999 !important;
+}
 </style>
