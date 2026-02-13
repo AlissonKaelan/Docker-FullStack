@@ -161,6 +161,44 @@ const updateSubtaskStatus = async (subtask) => {
   }
 };
 
+// --- deleteSubtask ---
+const deleteSubtask = async (subtaskId) => {
+    try {
+        // 1. Chama API
+        await http.delete(`/subtasks/${subtaskId}`);
+        
+        // 2. Atualiza Modal (Visualmente)
+        const index = selectedCard.value.subtasks.findIndex(s => s.id === subtaskId);
+        if (index !== -1) {
+            selectedCard.value.subtasks.splice(index, 1); // Remove item específico
+        }
+        updateOriginalCard(selectedCard.value); 
+
+    } catch (e) { console.error(e); }
+};
+
+// --- updateSubtaskTitle ---
+const updateSubtaskTitle = async (subtask) => {
+    if (!subtask.title.trim()) return; 
+    try {
+        await http.put(`/subtasks/${subtask.id}`, { title: subtask.title });
+        // Sincroniza com o card original na coluna
+        updateOriginalCard(selectedCard.value);
+    } catch (e) { console.error(e); }
+};
+
+// --- FUNÇÃO AUXILIAR ---
+// Serve para sincronizar o Modal com o Board sem recarregar API
+const updateOriginalCard = (updatedCard) => {
+    for (const col of columns.value) {
+        const cardIndex = col.cards.findIndex(c => c.id === updatedCard.id);
+        if (cardIndex !== -1) {
+            col.cards[cardIndex] = JSON.parse(JSON.stringify(updatedCard));
+            break;
+        }
+    }
+};
+
 const handleError = (error) => {
   console.error(error);
   if (error.response && error.response.status === 401) {
@@ -275,8 +313,17 @@ onMounted(() => {
             <h4>Subtarefas</h4>
             <div class="subtask-list">
               <div v-for="sub in selectedCard.subtasks" :key="sub.id" class="subtask-item">
+                
                 <input type="checkbox" v-model="sub.is_completed" @change="updateSubtaskStatus(sub)" />
-                <span :class="{ 'completed-text': sub.is_completed }">{{ sub.title }}</span>
+                
+                <input 
+                    v-model="sub.title" 
+                    @blur="updateSubtaskTitle(sub)"
+                    @keyup.enter="$event.target.blur()"
+                    class="subtask-input"
+                />
+
+                <button @click="deleteSubtask(sub.id)" class="btn-sub-del" title="Excluir item">×</button>
               </div>
             </div>
             <div class="add-subtask">
@@ -402,5 +449,49 @@ button { border: none; border-radius: 8px; cursor: pointer; font-weight: 600; pa
     transform: scale(1.2);
     opacity: 1;
     filter: hue-rotate(140deg); /* Faz ficar avermelhado */
+}
+
+.subtask-item { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    padding: 5px 0; 
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* O input parece texto normal até ser clicado */
+.subtask-input {
+    flex: 1;
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 4px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    border-radius: 4px;
+    outline: none;
+    transition: 0.2s;
+}
+
+.subtask-input:focus {
+    background: var(--input-bg);
+    border-color: var(--accent-color);
+}
+
+.subtask-input:hover {
+    border-color: var(--border-color); /* Mostra borda leve ao passar mouse */
+}
+
+.btn-sub-del {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 5px;
+    line-height: 1;
+}
+
+.btn-sub-del:hover {
+    color: #ef4444;
 }
 </style>
