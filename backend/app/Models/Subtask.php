@@ -11,7 +11,10 @@ class Subtask extends Model
 
     protected $fillable = [
         'description', 'amount', 'type', 'transaction_date', 
-        'user_id', 'batch_id', 'category_id'
+        'user_id', 'batch_id', 'category_id',
+        'card_id', 
+        'title', 
+        'is_completed'
     ];
 
     protected $casts = [

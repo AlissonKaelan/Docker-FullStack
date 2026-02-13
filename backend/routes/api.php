@@ -38,6 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::post('/subtasks', [KanbanController::class, 'storeSubtask']);
     Route::put('/subtasks/{id}', [KanbanController::class, 'updateSubtask']);
+    Route::delete('/subtasks/{id}', [KanbanController::class, 'deleteSubtask']);
 
     // Rotas de Finanças
     Route::get('/transactions', [TransactionController::class, 'index']);

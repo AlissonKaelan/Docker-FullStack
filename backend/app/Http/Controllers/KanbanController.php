@@ -57,7 +57,7 @@ class KanbanController extends Controller
     // --- LÓGICA DE MOVIMENTAÇÃO (Mantida a sua, apenas ajustado nomes se necessário) ---
     public function updateCard(Request $request, $cardId)
     {
-        $card = Card::findOrFail($cardId);
+        $card = Card::with('column')->findOrFail($cardId);
         $data = $request->all();
 
         // Se estiver atualizando a ordem via Drag and Drop
@@ -65,7 +65,7 @@ class KanbanController extends Controller
              $card->order = $data['order'];
         }
 
-        // CENÁRIO 1: ARRASTOU (Mudança de Coluna)
+        // CENÁRIO 1: ARRASTOUO PARA OUTRA COLUNA (Mudança de Coluna)
         if (isset($data['column_id']) && $data['column_id'] != $card->column_id) {
             $targetColumn = Column::find($data['column_id']);
             
@@ -88,10 +88,11 @@ class KanbanController extends Controller
             }
         }
         
-        // CENÁRIO 2: SLIDER (Mudança de Porcentagem)
+        // CENÁRIO 2: SLIDER OU EDIÇÃO DE TEXTO (Mudança de Porcentagem/Dados)
         elseif (isset($data['percentage'])) {
             $percentage = intval($data['percentage']);
             
+            // Define o alvo baseado na porcentagem
             if ($percentage === 0) {
                 $targetSlug = 'todo';
             } elseif ($percentage === 100) {
@@ -101,12 +102,22 @@ class KanbanController extends Controller
                 $targetSlug = 'doing';
             }
 
+            // Verifica se a coluna atual é uma das "Padrão"
+            $isStandardColumn = in_array($card->column->slug, ['todo', 'doing', 'done']);
+
+            // Se a tarefa está em uma COLUNA PERSONALIZADA (ex: "Ideias", "Revisão")
+            // E a porcentagem é menor que 100, NÃO movemos ela automaticamente.
+            // Só movemos se for 100% (para Concluído), pois isso faz sentido globalmente.
+            if (!$isStandardColumn && $percentage < 100) {
+                unset($targetSlug); // Cancela a mudança de coluna
+            }
             if (isset($targetSlug)) {
                 // Busca a coluna alvo APENAS DO USUÁRIO ATUAL
                 $autoCol = Column::where('user_id', Auth::id())
-                                 ->where('slug', $targetSlug)
-                                 ->first();
+                                ->where('slug', $targetSlug)
+                                ->first();
                                  
+                // Só muda a coluna se a coluna alvo existir e for diferente da atual
                 if ($autoCol && $card->column_id !== $autoCol->id) {
                     $data['column_id'] = $autoCol->id;
                 }
@@ -120,20 +131,45 @@ class KanbanController extends Controller
 
     public function storeSubtask(Request $request)
     {
+        // Validar é importante para evitar erros de SQL brutos
+        $request->validate([
+            'card_id' => 'required|exists:cards,id',
+            'title' => 'required|string'
+        ]);
+
         $subtask = Subtask::create([
             'card_id' => $request->card_id,
-            'title' => $request->title
+            'title' => $request->title,
+            // 'is_completed'
         ]);
+        
         return response()->json($subtask);
     }
 
+    // --- ATUALIZAR (Permitir mudar status E título) ---
     public function updateSubtask(Request $request, $id)
     {
         $subtask = Subtask::findOrFail($id);
-        $subtask->is_completed = $request->boolean('is_completed');
+
+        if ($request->has('is_completed')) {
+            $subtask->is_completed = $request->boolean('is_completed');
+        }
+
+        if ($request->has('title')) {
+            $subtask->title = $request->title;
+        }
+
         $subtask->save();
         
         return response()->json($subtask);
+    }
+
+    // --- NOVO MÉTODO: DELETAR SUBTAREFA ---
+    public function deleteSubtask($id)
+    {
+        $subtask = Subtask::findOrFail($id);
+        $subtask->delete();
+        return response()->json(['message' => 'Subtarefa deletada']);
     }
     public function deleteCard($id)
     {
