@@ -69,7 +69,8 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import http from '../services/http';
+import http from '../services/http'; 
+import axios from 'axios';
 
 const router = useRouter();
 const email = ref('');
@@ -78,18 +79,17 @@ const showPassword = ref(false);
 const loading = ref(false);
 const errorMessage = ref('');
 
-// --- LÓGICA DO CARROSSEL ---
+// --- LÓGICA DO CARROSSEL (Mantém igual) ---
 const currentImageIndex = ref(0);
 const images = [
-  'https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=1920&auto=format&fit=crop', // Escritório
-  'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1920&auto=format&fit=crop', // Dados/Financeiro
-  'https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=1920&auto=format&fit=crop'  // Código/Tech
+  'https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=1920&auto=format&fit=crop', 
+  'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1920&auto=format&fit=crop', 
+  'https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=1920&auto=format&fit=crop'  
 ];
 let intervalId;
 
 onMounted(() => { 
   localStorage.removeItem('token');
-  // Troca de imagem a cada 5 segundos
   intervalId = setInterval(() => {
     currentImageIndex.value = (currentImageIndex.value + 1) % images.length;
   }, 5000);
@@ -100,21 +100,37 @@ onUnmounted(() => clearInterval(intervalId));
 const handleLogin = async () => {
   loading.value = true;
   errorMessage.value = '';
+
   try {
+    // 1. CORREÇÃO CRÍTICA: 
+    // Usamos o axios puro com a URL COMPLETA (sem /api) para pegar o cookie.
+    // Isso evita o erro 404.
+    await axios.get('http://192.168.1.44:8000/sanctum/csrf-cookie', {
+        withCredentials: true // Obrigatório para o cookie ser salvo
+    });
+
+    // 2. Agora fazemos o login usando a instância configurada (que aponta para /api)
     const response = await http.post('/login', { email: email.value, password: password.value });
+    
+    // 3. Sucesso
     const token = response.data.token;
     localStorage.setItem('token', token);
     http.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
     router.push('/');
+
   } catch (error) {
-    console.error(error);
-    errorMessage.value = 'E-mail ou senha incorretos.';
+    console.error("Erro no Login:", error);
+    if (error.response && error.response.status === 422) {
+        errorMessage.value = 'E-mail ou senha incorretos.';
+    } else {
+        errorMessage.value = 'Erro de conexão. Verifique se o servidor está rodando.';
+    }
   } finally {
     loading.value = false;
   }
 };
 </script>
-
 <style scoped>
 .split-screen { display: flex; min-height: 100vh; font-family: 'Segoe UI', sans-serif; background-color: var(--bg-primary); }
 

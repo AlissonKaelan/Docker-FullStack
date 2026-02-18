@@ -5,27 +5,31 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-
 class Transaction extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'description',
         'amount',
         'type',
         'transaction_date',
-        'user_id', 
+        'category_id',
+        'user_id',       
+        'card_id',       
         'batch_id',
-        'category_id'
+        'installments',
+        'current_installment',
+        'installment_id'
     ];
-
-    protected $casts = [
-        'transaction_date' => 'date',
-        'amount' => 'decimal:2',
-    ];
-
-    public function user()
+    public function category()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Category::class);
+    }
+    
+    // (Opcional) Adicione a relação inversa se quiser
+    public function card()
+    {
+        return $this->belongsTo(Card::class);
     }
 }

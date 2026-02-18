@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+
 class TransactionController extends Controller
 {
     public function index(Request $request)
@@ -23,12 +24,12 @@ class TransactionController extends Controller
                   ->whereYear('transaction_date', Carbon::now()->year);
         }
 
-        return $query->orderBy('transaction_date', 'desc')->get();
+        // Traz a categoria e o card junto para mostrar cores/nomes se precisar
+        return $query->with(['category', 'card'])->orderBy('transaction_date', 'desc')->get();
     }
 
     public function balance(Request $request)
     {
-        // O saldo também precisa respeitar o filtro de data para mostrar "Saldo do Mês"
         $query = Transaction::where('user_id', Auth::id());
 
         if ($request->has('month') && $request->has('year')) {
@@ -55,46 +56,58 @@ class TransactionController extends Controller
             'amount' => 'required|numeric',
             'type' => 'required',
             'transaction_date' => 'required|date',
-            'category_id' => 'nullable|exists:categories,id'
+            'category_id' => 'nullable|exists:categories,id',
+            'installments' => 'nullable|integer|min:1',
+            'card_id' => 'nullable|exists:cards,id', // Validando
         ]);
 
         $installments = (int) $request->input('installments', 1);
         $totalAmount = $request->input('amount');
         $baseDate = Carbon::parse($request->input('transaction_date'));
         
+        // Gera um ID único para o grupo de parcelas
         $batchId = $installments > 1 ? Str::uuid() : null;
 
+        // --- LÓGICA DE PARCELAMENTO ---
         if ($installments > 1 && $request->type === 'expense') {
-            // Calcula o valor da parcela (ex: 100 / 3 = 33.3333...)
-            // Precisamos arredondar para 2 casas para não dar erro no banco
+            
             $amountPerShare = round($totalAmount / $installments, 2);
             
-            // Opcional: Ajuste de centavos na última parcela (ex: 33.33 + 33.33 + 33.34 = 100.00)
-            // Se quiser simples, mantenha como está, mas pode dar diferença de centavos.
+            // Corrige diferença de centavos na primeira parcela
+            $diff = round($totalAmount - ($amountPerShare * $installments), 2);
             
             for ($i = 0; $i < $installments; $i++) {
                 $date = $baseDate->copy()->addMonthsNoOverflow($i);
                 
+                // Adiciona a diferença de centavos na primeira parcela
+                $currentAmount = ($i == 0) ? $amountPerShare + $diff : $amountPerShare;
+
                 Transaction::create([
                     'description' => $request->description . " (" . ($i + 1) . "/$installments)",
-                    'amount' => $amountPerShare,
+                    'amount' => $currentAmount,
                     'type' => $request->type,
                     'transaction_date' => $date,
                     'user_id' => Auth::id(),
-                    'batch_id' => $batchId
+                    'batch_id' => $batchId,
+                    'category_id' => $request->category_id,
+                    'card_id' => $request->card_id // <--- ADICIONADO AQUI
                 ]);
             }
             return response()->json(['message' => 'Compra parcelada registrada!'], 201);
+        
         } else {
+            // --- COMPRA À VISTA / ÚNICA ---
             $transaction = Transaction::create([
                 'description' => $request->description,
                 'amount' => $totalAmount,
                 'type' => $request->type,
                 'transaction_date' => $request->transaction_date,
-                'user_id' => Auth::id(),
+                'user_id' => Auth::id(), // Garante o ID do usuário
                 'batch_id' => null,
-                'category_id' => $request->category_id
+                'category_id' => $request->category_id,
+                'card_id' => $request->card_id // <--- ADICIONADO AQUI (Era isso que faltava!)
             ]);
+            
             return response()->json($transaction, 201);
         }
     }
@@ -103,23 +116,22 @@ class TransactionController extends Controller
     {
         $transaction = Transaction::where('user_id', Auth::id())->findOrFail($id);
         
-        // Se o usuário pediu para atualizar TODAS as parcelas e existe um batch_id
+        // Se pediu para atualizar TODAS as parcelas
         if ($request->boolean('update_all') && $transaction->batch_id) {
             
-            // Atualiza todas que têm o mesmo batch_id
-            // OBS: Não mudamos a data em lote para não encavalar tudo no mesmo mês
             Transaction::where('batch_id', $transaction->batch_id)
                 ->where('user_id', Auth::id())
                 ->update([
-                    'description' => $request->description, // Cuidado: isso tira o (1/3) do nome se não tratar
+                    // Atualiza campos comuns, inclusive Card e Categoria
+                    'description' => $request->description, 
                     'amount' => $request->amount,
                     'type' => $request->type,
-                    'category_id' => $request->category_id
+                    'category_id' => $request->category_id,
+                    'card_id' => $request->card_id // <--- Adicionado para atualizar card em lote também
                 ]);
                 
             return response()->json(['message' => 'Lote atualizado']);
         }
-
 
         $transaction->update($request->all());
         return response()->json($transaction);
@@ -129,7 +141,6 @@ class TransactionController extends Controller
     {
         $transaction = Transaction::where('user_id', Auth::id())->findOrFail($id);
 
-        // Se pediu para deletar tudo e tem grupo
         if ($request->boolean('delete_all') && $transaction->batch_id) {
             Transaction::where('batch_id', $transaction->batch_id)
                 ->where('user_id', Auth::id())

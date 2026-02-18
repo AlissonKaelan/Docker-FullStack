@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'], // <--- O SEGREDO ESTÁ AQUI (Permite tudo)
+    'allowed_origins' => ['*'], // Ou coloque o IP específico: ['http://192.168.1.44:5173']
 
     'allowed_origins_patterns' => [],
 
@@ -29,6 +29,6 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => false,
+    'supports_credentials' => true,
 
 ];

@@ -118,11 +118,6 @@ const onCardDrop = async (event, columnId) => {
 
 // --- MODAL & LÓGICA ---
 
-const openCardModal = (card) => {
-  selectedCard.value = JSON.parse(JSON.stringify(card)); 
-  showModal.value = true;
-};
-
 const updateCardDetails = async () => {
   if (!selectedCard.value) return;
   try {
@@ -208,6 +203,97 @@ const handleError = (error) => {
   }
 };
 
+// --- VARIÁVEIS DO FINANCEIRO NO KANBAN ---
+const categories = ref([]); // Lista para o <select>
+const showAddCostForm = ref(false); // Mostra/Esconde formulário
+const newCost = ref({
+  description: '',
+  amount: '',
+  category_id: null,
+  transaction_date: new Date().toISOString().substr(0, 10)
+});
+
+// AQUI ESTAVA O ERRO (Corrigido para 'const')
+const activeTab = ref('details'); // Controla a aba (Detalhes ou Custos)
+const cardTransactions = ref([]); // Lista de gastos salvos
+const loadingTransactions = ref(false);
+
+// --- FUNÇÃO PARA LISTAR OS GASTOS ---
+const fetchCardTransactions = async (cardId) => {
+  loadingTransactions.value = true;
+  cardTransactions.value = [];
+  try {
+    const { data } = await http.get(`/cards/${cardId}/transactions`);
+    cardTransactions.value = data;
+  } catch (error) {
+    console.error("Erro ao buscar custos:", error);
+  } finally {
+    loadingTransactions.value = false;
+  }
+};
+
+// --- FUNÇÃO 1: BUSCAR CATEGORIAS ---
+const fetchCategories = async () => {
+  // Só busca se a lista estiver vazia (evita requisição repetida)
+  if (categories.value.length > 0) return; 
+  
+  try {
+    const { data } = await http.get('/categories');
+    // Filtramos apenas categorias de DESPESA (expense)
+    categories.value = data.filter(c => c.type === 'expense');
+  } catch (error) {
+    console.error("Erro ao buscar categorias", error);
+  }
+};
+
+// --- FUNÇÃO 2: SALVAR O NOVO CUSTO ---
+const saveCost = async () => {
+  if (!newCost.value.description || !newCost.value.amount) {
+    alert("Preencha descrição e valor!");
+    return;
+  }
+
+  try {
+    // Envia para a API vinculando ao card_id atual
+    await http.post('/transactions', {
+      ...newCost.value,
+      type: 'expense', // Sempre é saída
+      card_id: selectedCard.value.id 
+    });
+
+    // Limpa o formulário e fecha
+    showAddCostForm.value = false;
+    newCost.value = { 
+        description: '', amount: '', category_id: null, 
+        transaction_date: new Date().toISOString().substr(0, 10) 
+    };
+
+    // Atualiza a lista de custos deste card
+    await fetchCardTransactions(selectedCard.value.id);
+    
+    // Atualiza o quadro Kanban inteiro (para atualizar o total no card lá fora)
+    await fetchKanban(); 
+
+  } catch (error) {
+    console.error(error);
+    alert("Erro ao salvar. Veja o console.");
+  }
+};
+
+// --- ATUALIZAÇÃO: Modifique a função openCardModal existente ---
+const openCardModal = (card) => {
+  // ... (mantenha o código que já existia aqui) ...
+  selectedCard.value = JSON.parse(JSON.stringify(card)); 
+  activeTab.value = 'details'; 
+  showModal.value = true;
+  
+  // Lógica nova:
+  if (card.transactions_sum_amount > 0) {
+      fetchCardTransactions(card.id);
+  }
+  fetchCategories(); // <--- CHAMA AS CATEGORIAS AO ABRIR
+};
+
 onMounted(() => {
   fetchKanban();
 });
@@ -273,8 +359,7 @@ onMounted(() => {
     <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
       <div class="modal-content">
         <div class="modal-header">
-          <h2>Editar Tarefa</h2>
-          <div class="header-actions">
+          <h2>{{ selectedCard.title }}</h2> <div class="header-actions">
               <button 
                   @click="deleteCard(selectedCard.id); showModal = false" 
                   class="btn-icon-danger" 
@@ -282,54 +367,121 @@ onMounted(() => {
               >
                 🗑️
               </button>
-              
               <button @click="showModal = false" class="close-btn">×</button>
           </div>
         </div>
 
+        <div class="modal-tabs">
+          <button 
+            class="tab-btn" 
+            :class="{ active: activeTab === 'details' }" 
+            @click="activeTab = 'details'"
+          >
+            📝 Detalhes
+          </button>
+          <button 
+            class="tab-btn" 
+            :class="{ active: activeTab === 'finance' }" 
+            @click="activeTab = 'finance'; fetchCardTransactions(selectedCard.id)"
+          >
+            💰 Custos 
+            <span v-if="selectedCard.transactions_sum_amount" class="cost-badge">
+              R$ {{ selectedCard.transactions_sum_amount }}
+            </span>
+          </button>
+        </div>
+
         <div class="modal-body" v-if="selectedCard">
-          <div class="form-group">
-            <label>Título</label>
-            <input v-model="selectedCard.title" @change="updateCardDetails" class="input-modern full-width" />
-          </div>
+          
+          <div v-show="activeTab === 'details'">
+            <div class="form-group">
+              <label>Título</label>
+              <input v-model="selectedCard.title" @change="updateCardDetails" class="input-modern full-width" />
+            </div>
 
-          <div class="form-group">
-            <label>Progresso: {{ selectedCard.percentage }}%</label>
-            <input 
-              type="range" min="0" max="100" step="10" 
-              v-model="selectedCard.percentage" 
-              @change="updateCardDetails"
-              class="slider"
-              :style="{backgroundSize: selectedCard.percentage + '% 100%'}" 
-            />
-          </div>
+            <div class="form-group">
+              <label>Progresso: {{ selectedCard.percentage }}%</label>
+              <input 
+                type="range" min="0" max="100" step="10" 
+                v-model="selectedCard.percentage" 
+                @change="updateCardDetails"
+                class="slider"
+                :style="{backgroundSize: selectedCard.percentage + '% 100%'}" 
+              />
+            </div>
 
-          <div class="form-group">
-            <label>Descrição</label>
-            <textarea v-model="selectedCard.description" @change="updateCardDetails" placeholder="Detalhes..." rows="3" class="input-modern full-width"></textarea>
-          </div>
+            <div class="form-group">
+              <label>Descrição</label>
+              <textarea v-model="selectedCard.description" @change="updateCardDetails" placeholder="Detalhes..." rows="3" class="input-modern full-width"></textarea>
+            </div>
 
-          <div class="subtasks-section">
-            <h4>Subtarefas</h4>
-            <div class="subtask-list">
-              <div v-for="sub in selectedCard.subtasks" :key="sub.id" class="subtask-item">
-                
-                <input type="checkbox" v-model="sub.is_completed" @change="updateSubtaskStatus(sub)" />
-                
-                <input 
-                    v-model="sub.title" 
-                    @blur="updateSubtaskTitle(sub)"
-                    @keyup.enter="$event.target.blur()"
-                    class="subtask-input"
-                />
-
-                <button @click="deleteSubtask(sub.id)" class="btn-sub-del" title="Excluir item">×</button>
+            <div class="subtasks-section">
+              <h4>Subtarefas</h4>
+              <div class="subtask-list">
+                <div v-for="sub in selectedCard.subtasks" :key="sub.id" class="subtask-item">
+                  <input type="checkbox" v-model="sub.is_completed" @change="updateSubtaskStatus(sub)" />
+                  <input 
+                      v-model="sub.title" 
+                      @blur="updateSubtaskTitle(sub)"
+                      @keyup.enter="$event.target.blur()"
+                      class="subtask-input"
+                  />
+                  <button @click="deleteSubtask(sub.id)" class="btn-sub-del">×</button>
+                </div>
+              </div>
+              <div class="add-subtask">
+                <input v-model="newSubtaskTitle" @keyup.enter="addSubtask" placeholder="+ Adicionar subtarefa e Enter" class="input-modern full-width" />
               </div>
             </div>
-            <div class="add-subtask">
-              <input v-model="newSubtaskTitle" @keyup.enter="addSubtask" placeholder="+ Adicionar subtarefa e Enter" class="input-modern full-width" />
+          </div>
+
+          <div v-show="activeTab === 'finance'" class="finance-tab">
+            <div class="finance-header">
+                <h3>Custos do Projeto</h3>
+                <button v-if="!showAddCostForm" @click="showAddCostForm = true" class="btn-add-cost">
+                  + Novo Custo
+                </button>
+                <button v-else @click="showAddCostForm = false" class="btn-cancel">
+                  Cancelar
+                </button>
+            </div>
+
+            <div v-if="showAddCostForm" class="add-cost-form">
+                <input v-model="newCost.description" placeholder="Descrição (ex: Hospedagem)" class="form-input" />
+                <div class="row-inputs">
+                  <input v-model="newCost.amount" type="number" step="0.01" placeholder="Valor" class="form-input" />
+                  <input v-model="newCost.transaction_date" type="date" class="form-input" />
+                </div>
+                <select v-model="newCost.category_id" class="form-input">
+                  <option :value="null">Sem Categoria</option>
+                  <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+                </select>
+                <button @click="saveCost" class="btn-save-cost">Salvar Despesa</button>
+            </div>
+
+            <div v-else class="cost-list-container">
+                <div v-if="loadingTransactions" class="loading-state">Carregando...</div>
+                <div v-else-if="cardTransactions.length === 0" class="empty-state">
+                  <p>Nenhum custo lançado.</p>
+                </div>
+                <div v-else>
+                  <div v-for="t in cardTransactions" :key="t.id" class="t-item">
+                      <div class="t-info">
+                        <strong>{{ t.description }}</strong>
+                        <span class="t-cat" :style="{ color: t.category?.color || '#888' }">
+                            {{ t.category?.name || 'Geral' }}
+                        </span>
+                      </div>
+                      <div class="t-value">- R$ {{ parseFloat(t.amount).toFixed(2) }}</div>
+                  </div>
+                  <div class="t-total">
+                      <span>Total Gasto:</span>
+                      <span style="color: #ef4444">R$ {{ selectedCard.transactions_sum_amount }}</span>
+                  </div>
+                </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
@@ -494,4 +646,72 @@ button { border: none; border-radius: 8px; cursor: pointer; font-weight: 600; pa
 .btn-sub-del:hover {
     color: #ef4444;
 }
+
+/* --- ESTILOS NOVOS PARA O FINANCEIRO --- */
+
+/* Abas */
+.modal-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  padding: 0 10px;
+}
+.tab-btn {
+  flex: 1;
+  padding: 15px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: 0.2s;
+  border-radius: 0;
+}
+.tab-btn:hover { background: rgba(0,0,0,0.05); }
+.tab-btn.active {
+  color: var(--accent-color);
+  border-bottom-color: var(--accent-color);
+}
+.cost-badge {
+  background: #fee2e2; color: #ef4444; font-size: 0.7rem;
+  padding: 2px 6px; border-radius: 10px; margin-left: 5px;
+}
+
+/* Formulário e Lista Financeira */
+.finance-tab { padding-top: 10px; }
+.finance-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+}
+.finance-header h3 { margin: 0; font-size: 1.1rem; color: var(--text-primary); }
+
+.btn-add-cost { background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+.btn-cancel { background: #64748b; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+
+.add-cost-form {
+  background: var(--bg-secondary); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.row-inputs { display: flex; gap: 10px; }
+.row-inputs input { flex: 1; }
+
+.form-input {
+  padding: 10px; border: 1px solid var(--border-color); border-radius: 6px;
+  background: var(--input-bg); color: var(--text-primary); outline: none;
+}
+.btn-save-cost {
+  background: var(--accent-color); color: white; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;
+}
+
+.t-item {
+  display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color);
+}
+.t-info { display: flex; flex-direction: column; }
+.t-cat { font-size: 0.75rem; font-weight: bold; }
+.t-value { color: #ef4444; font-weight: bold; }
+.t-total {
+  margin-top: 15px; background: rgba(239, 68, 68, 0.1); color: #ef4444;
+  padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; font-weight: bold;
+}
+.empty-state { text-align: center; color: var(--text-secondary); padding: 20px; }
 </style>

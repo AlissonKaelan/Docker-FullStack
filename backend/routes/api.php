@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\KanbanController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\CardController;
+use App\Http\Controllers\CategoryController;
 
 // --- ROTAS PÚBLICAS (Aberta para todos) ---
 Route::post('/register', [AuthController::class, 'register']);
@@ -29,6 +31,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/kanban', [KanbanController::class, 'index']);
     Route::post('/cards', [KanbanController::class, 'storeCard']);
     Route::put('/cards/{id}', [KanbanController::class, 'updateCard']);
+
+    // Rotas Padrão (Criar, Editar, Deletar)
+    Route::apiResource('cards', CardController::class);
+
+    // Rota Especial (Buscar Custos) - AQUELA QUE DAVA ERRO 404
+    Route::get('/cards/{id}/transactions', [CardController::class, 'transactions']);
     
     // Novas Rotas (Colunas e Subtarefas)
     Route::post('/columns', [KanbanController::class, 'storeColumn']); // Criar coluna "Provas"
