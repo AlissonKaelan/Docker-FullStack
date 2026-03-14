@@ -71,6 +71,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import http from '../services/http'; 
 import axios from 'axios';
+import { useAuthStore } from '../stores/auth';
 
 const router = useRouter();
 const email = ref('');
@@ -101,6 +102,8 @@ const handleLogin = async () => {
   loading.value = true;
   errorMessage.value = '';
 
+  const authStore = useAuthStore();
+
   try {
     // 1. CORREÇÃO CRÍTICA: 
     // Usamos o axios puro com a URL COMPLETA (sem /api) para pegar o cookie.
@@ -116,7 +119,8 @@ const handleLogin = async () => {
     const token = response.data.token;
     localStorage.setItem('token', token);
     http.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    
+    authStore.checkToken();
+    await new Promise(resolve => setTimeout(resolve, 300));
     router.push('/');
 
   } catch (error) {

@@ -58,10 +58,14 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import http from '../services/http';
+import { useAuthStore } from '../stores/auth'; // Importou certo!
 
 const router = useRouter();
 const user = ref(null);
 const isDark = ref(false);
+
+// 1. A SOLUÇÃO: Você precisa "ligar" o store instanciando ele aqui!
+const authStore = useAuthStore();
 
 // Lógica do Tema
 const toggleTheme = () => {
@@ -86,15 +90,16 @@ onMounted(async () => {
   try {
     const response = await http.get('/user');
     user.value = response.data;
-  } catch (error) { console.error(error); }
+  } catch (error) { 
+    console.error(error); 
+  }
 });
 
-const handleLogout = async () => {
-  try { await http.post('/logout'); } catch (e) {} 
-  finally {
-    localStorage.removeItem('token');
-    router.push('/login');
-  }
+// 2. LOGOUT SIMPLIFICADO
+const handleLogout = () => {
+    // Como o auth.js já limpa o storage, os cabeçalhos e faz o router.push('/login'),
+    // basta delegar o trabalho pesado para ele em uma linha:
+    authStore.logout(); 
 };
 </script>
 

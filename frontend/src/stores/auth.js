@@ -1,62 +1,52 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
 import router from '@/router';
+import http from '@/services/http'; // Usando o seu http configurado
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
-        token: localStorage.getItem('token') || null, // Tenta pegar do armazenamento local
+        token: localStorage.getItem('token') || null,
         user: JSON.parse(localStorage.getItem('user')) || null,
         isAuthenticated: !!localStorage.getItem('token'),
     }),
 
     actions: {
-        async login(email, password) {
-            try {
-                // 1. Pede o token pro Laravel
-                const response = await axios.post('http://localhost:8000/api/login', {
-                    email,
-                    password
-                });
+        // ESSA É A ESTRELA DO SHOW: Lê o localStorage de verdade e avisa o Vue
+        checkToken() {
+            const currentToken = localStorage.getItem('token');
+            const currentUser = localStorage.getItem('user');
 
-                // 2. Salva na memória (Pinia) e no Navegador (LocalStorage)
-                this.token = response.data.token;
-                this.user = response.data.user;
+            if (currentToken) {
+                this.token = currentToken;
                 this.isAuthenticated = true;
-
-                localStorage.setItem('token', this.token);
-                localStorage.setItem('user', JSON.stringify(this.user));
-
-                // 3. Configura o Axios para usar esse token nas próximas chamadas
-                axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
-
-                // 4. Manda o usuário para o Kanban
-                router.push('/kanban');
-
-            } catch (error) {
-                console.error('Erro no login', error);
-                throw error; // Joga o erro para a tela tratar
+                if (currentUser) this.user = JSON.parse(currentUser);
+                
+                // Garante que o Axios e o HTTP tenham o token
+                axios.defaults.headers.common['Authorization'] = `Bearer ${currentToken}`;
+                http.defaults.headers.common['Authorization'] = `Bearer ${currentToken}`;
+            } else {
+                this.token = null;
+                this.isAuthenticated = false;
+                this.user = null;
             }
         },
 
         logout() {
-            // Limpa tudo
+            // 1. Limpa o Pinia
             this.token = null;
             this.user = null;
             this.isAuthenticated = false;
+            
+            // 2. Limpa o Navegador
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             
-            // Remove o cabeçalho do Axios
+            // 3. Remove os cabeçalhos
             delete axios.defaults.headers.common['Authorization'];
+            delete http.defaults.headers.common['Authorization'];
 
+            // 4. Manda pro Login
             router.push('/login');
-        },
-        
-        // Função para verificar se o token existe ao recarregar a página
-        checkToken() {
-             if (this.token) {
-                 axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
-             }
         }
     }
 });

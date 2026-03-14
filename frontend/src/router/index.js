@@ -58,11 +58,19 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
 
+  // 1. PRIMEIRO DE TUDO: Sincroniza o Pinia com o localStorage atual
+  authStore.checkToken();
+
+  // 2. Agora, toma a decisão com base na verdade absoluta
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next('/login');
-  } else {
-    authStore.checkToken();
-    next();
+    next('/login'); // Bloqueia e manda pro login
+  } 
+  // 3. Bônus: Se tentar ir pro login já estando logado, manda pra home
+  else if (to.path === '/login' && authStore.isAuthenticated) {
+    next('/home');
+  } 
+  else {
+    next(); // Passagem livre
   }
 })
 
