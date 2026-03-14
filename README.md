@@ -1,6 +1,4 @@
-### 1. 📄 Arquivo `README.md` (Visão Geral e Comandos)
-
-Este arquivo foca no "O que é", "Como rodar" e "Tecnologias".
+### 1. 📄 Arquivo `README.md`
 
 ```markdown
 # 🚀 Docker FullStack Ecosystem: Kanban & Finance
@@ -17,6 +15,7 @@ O objetivo é criar uma plataforma unificada onde o esforço (Tarefas) se conect
 * **Login & Registro Moderno:** Design "Split-Screen" com validação visual e feedback instantâneo.
 * **Hub Unificado:** Dashboard com "Hero Header" que centraliza o acesso aos módulos.
 * **Isolamento de Dados:** Arquitetura Multi-tenancy (cada usuário acessa apenas seus dados).
+* **Cross-Device Ready:** Sessões e cookies (Sanctum) otimizados para funcionar de forma fluida tanto no PC quanto no navegador do celular na mesma rede local.
 
 #### 2. 📋 Módulo Kanban (Gerenciamento de Tarefas)
 * **Quadros Dinâmicos:** Criação/Exclusão de colunas personalizadas.
@@ -27,6 +26,7 @@ O objetivo é criar uma plataforma unificada onde o esforço (Tarefas) se conect
 
 #### 3. 💰 Módulo Financeiro (Gestão de Custos)
 * **Dashboard Visual:** Gráficos interativos (Chart.js) de Entradas vs Saídas.
+* **Custos por Tarefa:** Integração total com o Kanban, permitindo lançar despesas diretamente dentro de um Card específico.
 * **Categorização Inteligente:** Criação de categorias personalizadas (Ex: Alimentação, Lazer) com cores visuais.
 * **Parcelamento:** Lançamento automático de despesas parceladas (Ex: 10x de R$ 100).
 * **Cálculo em Tempo Real:** O saldo atualiza instantaneamente a cada operação.
@@ -52,9 +52,6 @@ O objetivo é criar uma plataforma unificada onde o esforço (Tarefas) se conect
 
 ---
 
-
-```
-
 ## 🕹️ Guia de Comandos (Ciclo de Vida)
 
 ### 🟢 1. Iniciar a Aplicação
@@ -62,8 +59,9 @@ Rode este comando para subir os containers em segundo plano.
 ```bash
 docker compose up -d
 
+```
 
-*Acesse em: `http://localhost:5173*`
+*Acesse o frontend via IP local definido no `.env` (ex: `http://192.168.1.X:5173`).*
 
 ### 🧪 2. Rodar Testes Automatizados
 
@@ -100,15 +98,43 @@ docker compose exec backend php artisan migrate
 
 ---
 
+## 📱 Configuração de Rede Local (PC e Celular)
+
+Para acessar o sistema via celular na mesma rede Wi-Fi e garantir que o Login (Sanctum) funcione sem bloqueios de CORS ou Cookies, configure seus arquivos `.env` com o seu IP da rede local (Ex: `192.168.1.X`):
+
+**No `backend/.env`:**
+
+```ini
+APP_URL=[http://192.168.1.](http://192.168.1.)X:8000
+FRONTEND_URL=[http://192.168.1.](http://192.168.1.)X:5173
+SESSION_DOMAIN=null
+SESSION_SECURE_COOKIE=false
+SESSION_SAME_SITE=lax
+SANCTUM_STATEFUL_DOMAINS=192.168.1.X:5173,localhost:5173,192.168.1.X
+
+```
+
+**No `frontend/.env`:**
+
+```ini
+VITE_API_URL=[http://192.168.1.](http://192.168.1.)X:8000/api
+
+```
+
+*Após alterar, rode `docker compose restart frontend` e limpe o cache de rotas do backend (`php artisan route:clear`).*
+
+---
+
 ## 📅 Dev Log (Roadmap)
 
 ### ✅ Concluído
 
 * [x] Configuração Docker (Nginx, PHP, MySQL, Node)
 * [x] **Backend:** CRUD Kanban, Subtarefas, Financeiro, Daily e Auth
-* [x] **Frontend:** Integração total com Axios Service (`http.js`)
+* [x] **Frontend:** Integração total com Axios Service (`http.js`) com `withCredentials`
 * [x] **UX/UI:** Redesign completo e Gráficos (Chart.js)
 * [x] **Features:** Categorias Financeiras, Parcelamento, Subtarefas Editáveis
+* [x] **Integração:** Vincular um Custo Financeiro a um Card do Kanban
 * [x] **Qualidade:** Testes Automatizados com Pest PHP
 
 ### 🚧 Em Desenvolvimento
@@ -118,7 +144,6 @@ docker compose exec backend php artisan migrate
 
 ### 🔮 Futuro
 
-* [ ] Vincular um Custo Financeiro a um Card do Kanban
 * [ ] Exportação de Relatórios PDF
 
-> 🔗 Para detalhes técnicos dos endpoints, consulte o arquivo [ROTAS.md](https://github.com/AlissonKaelan/Docker-FullStack/blob/main/ROTAS.md).
+> 🔗 Para detalhes técnicos dos endpoints, consulte o arquivo [ROTAS.md](https://www.google.com/search?q=./ROTAS.md).
