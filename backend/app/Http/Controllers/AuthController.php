@@ -6,17 +6,27 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
     // 1. REGISTRAR NOVO USUÁRIO
     public function register(Request $request)
     {
-        // Validação
+        // Validação com mensagens 100% em português e amigáveis
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6'
+            'password' => 'required|string|min:8|confirmed' // 'confirmed' checa o password_confirmation automaticamente
+        ], [
+            // Aqui você dita exatamente o que o usuário vai ler
+            'name.required' => 'Por favor, informe o seu nome completo.',
+            'email.required' => 'O campo de e-mail é obrigatório.',
+            'email.email' => 'Por favor, digite um e-mail válido.',
+            'email.unique' => 'Este e-mail já está cadastrado em nosso sistema. Tente fazer login.',
+            'password.required' => 'A senha é obrigatória.',
+            'password.min' => 'A sua senha deve ter pelo menos 8 caracteres para sua segurança.',
+            'password.confirmed' => 'As senhas digitadas não coincidem. Verifique e tente novamente.'
         ]);
 
         // Criar usuário no banco
@@ -45,17 +55,27 @@ class AuthController extends Controller
         ], 201);
     }
 
-    // 2. LOGIN
+    //Login
     public function login(Request $request)
     {
+        // 1. Valida se o usuário preencheu os campos antes de tentar ir no banco
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        // 2. Tenta fazer o login
         if (!Auth::attempt($request->only('email', 'password'))) {
-            return response()->json(['message' => 'Credenciais inválidas'], 401);
+            // Dispara um erro 422 simulando que o erro foi no campo "email"
+            throw ValidationException::withMessages([
+                'email' => ['As credenciais fornecidas estão incorretas.'],
+            ]);
         }
 
         $user = User::where('email', $request->email)->firstOrFail();
 
         // Apaga tokens antigos e cria um novo (segurança extra)
-        //$user->tokens()->delete(); 
+        // $user->tokens()->delete(); 
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
