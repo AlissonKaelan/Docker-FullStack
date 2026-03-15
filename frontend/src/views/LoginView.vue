@@ -70,7 +70,6 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import http from '../services/http'; 
-import axios from 'axios';
 import { useAuthStore } from '../stores/auth';
 
 const router = useRouter();
@@ -80,7 +79,7 @@ const showPassword = ref(false);
 const loading = ref(false);
 const errorMessage = ref('');
 
-// --- LÓGICA DO CARROSSEL (Mantém igual) ---
+// --- LÓGICA DO CARROSSEL ---
 const currentImageIndex = ref(0);
 const images = [
   'https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=1920&auto=format&fit=crop', 
@@ -101,18 +100,16 @@ onUnmounted(() => clearInterval(intervalId));
 const handleLogin = async () => {
   loading.value = true;
   errorMessage.value = '';
-
   const authStore = useAuthStore();
 
   try {
-    // 1. CORREÇÃO CRÍTICA: 
-    // Usamos o axios puro com a URL COMPLETA (sem /api) para pegar o cookie.
-    // Isso evita o erro 404.
-    await axios.get('http://192.168.1.44:8000/sanctum/csrf-cookie', {
-        withCredentials: true // Obrigatório para o cookie ser salvo
-    });
+    // 1. Pede o cookie de forma limpa usando a nossa própria instância http
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+    const csrfUrl = apiUrl.replace('/api', '/sanctum/csrf-cookie');
+    
+    await http.get(csrfUrl);
 
-    // 2. Agora fazemos o login usando a instância configurada (que aponta para /api)
+    // 2. Faz o login
     const response = await http.post('/login', { email: email.value, password: password.value });
     
     // 3. Sucesso
@@ -125,32 +122,35 @@ const handleLogin = async () => {
 
   } catch (error) {
     console.error("Erro no Login:", error);
-    if (error.response && error.response.status === 422) {
-        errorMessage.value = 'E-mail ou senha incorretos.';
+    
+    // 4. Captura Erros Inteligente
+    if (error.response) {
+      if (error.response.status === 422) {
+        const erros = error.response.data.errors;
+        const primeiroCampo = Object.keys(erros)[0];
+        errorMessage.value = erros[primeiroCampo][0];
+      } else if (error.response.status === 401) {
+        errorMessage.value = 'Sessão expirada ou acesso negado.';
+      } else {
+        errorMessage.value = error.response.data.message || 'Ocorreu um erro no servidor. Tente novamente mais tarde.';
+      }
     } else {
-        errorMessage.value = 'Erro de conexão. Verifique se o servidor está rodando.';
+      errorMessage.value = 'Erro de conexão. Verifique se o servidor está rodando.';
     }
   } finally {
     loading.value = false;
   }
 };
 </script>
+
 <style scoped>
 .split-screen { display: flex; min-height: 100vh; font-family: 'Segoe UI', sans-serif; background-color: var(--bg-primary); }
 
-/* --- PAINEL ESQUERDO COM IMAGENS --- */
 .left-panel { 
-  flex: 1; 
-  position: relative; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  color: white; 
-  padding: 40px; 
-  overflow: hidden; 
+  flex: 1; position: relative; display: flex; align-items: center; justify-content: center; 
+  color: white; padding: 40px; overflow: hidden; 
 }
 
-/* Imagens de fundo sobrepostas */
 .bg-image {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   background-size: cover; background-position: center;
@@ -158,7 +158,6 @@ const handleLogin = async () => {
 }
 .bg-image.active { opacity: 1; }
 
-/* Overlay Escuro (Gradiente) para o texto aparecer bem */
 .overlay {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   background: linear-gradient(135deg, rgba(79, 70, 229, 0.9) 0%, rgba(124, 58, 237, 0.8) 100%);
@@ -171,7 +170,6 @@ const handleLogin = async () => {
 .features { list-style: none; padding: 0; text-align: left; display: inline-block; }
 .features li { font-size: 1.1rem; margin-bottom: 12px; opacity: 0.9; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
 
-/* --- PAINEL DIREITO --- */
 .right-panel { flex: 1; display: flex; align-items: center; justify-content: center; background-color: var(--bg-primary); transition: background-color 0.3s; }
 .auth-card { width: 100%; max-width: 400px; padding: 40px; }
 
@@ -187,11 +185,8 @@ const handleLogin = async () => {
 .eye-btn { position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: var(--text-secondary); }
 
 input { 
-  width: 100%; padding: 0.9rem; 
-  border: 1px solid var(--border-color); 
-  background-color: var(--input-bg);
-  color: var(--text-primary);
-  border-radius: 8px; font-size: 1rem; outline: none; transition: all 0.2s; box-sizing: border-box; 
+  width: 100%; padding: 0.9rem; border: 1px solid var(--border-color); background-color: var(--input-bg);
+  color: var(--text-primary); border-radius: 8px; font-size: 1rem; outline: none; transition: all 0.2s; box-sizing: border-box; 
 }
 input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
 

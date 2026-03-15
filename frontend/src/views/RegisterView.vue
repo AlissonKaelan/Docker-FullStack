@@ -69,7 +69,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'; // Adicionei onMounted/onUnmounted
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import http from '../services/http';
 
@@ -88,14 +88,12 @@ const images = [
 ];
 let intervalId;
 
-// Inicia a rotação das imagens ao carregar a tela
 onMounted(() => {
   intervalId = setInterval(() => {
     currentImageIndex.value = (currentImageIndex.value + 1) % images.length;
-  }, 5000); // Troca a cada 5 segundos
+  }, 5000);
 });
 
-// Limpa a memória quando sair da tela
 onUnmounted(() => {
   clearInterval(intervalId);
 });
@@ -104,55 +102,67 @@ const handleRegister = async () => {
   loading.value = true;
   errorMessage.value = '';
   try {
+    // 1. OBRIGATÓRIO: Pede o crachá usando a mesma lógica do Login
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+    const csrfUrl = apiUrl.replace('/api', '/sanctum/csrf-cookie');
+    
+    await http.get(csrfUrl);
+
+    // 2. Agora sim, envia os dados
     const response = await http.post('/register', form.value);
     const token = response.data.token;
+    
     if (token) {
         localStorage.setItem('token', token);
         http.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         router.push('/');
-    } else { router.push('/login'); }
+    } else { 
+        router.push('/login'); 
+    }
   } catch (error) {
-    console.error(error);
-    errorMessage.value = error.response?.data?.message || 'Erro ao registrar.';
-  } finally { loading.value = false; }
+    console.error("Erro no Registro:", error);
+    
+    // Captura os erros de validação em português
+    if (error.response) {
+        if (error.response.status === 422) {
+            const erros = error.response.data.errors;
+            const primeiroCampo = Object.keys(erros)[0];
+            errorMessage.value = erros[primeiroCampo][0]; 
+        } else if (error.response.data.message) {
+            errorMessage.value = error.response.data.message;
+        }
+    } else {
+        errorMessage.value = 'Não foi possível conectar ao servidor. Verifique sua rede.';
+    }
+  } finally { 
+    loading.value = false; 
+  }
 };
 </script>
 
 <style scoped>
 .split-screen { display: flex; min-height: 100vh; font-family: 'Segoe UI', sans-serif; background-color: white; }
 
-/* LADO ESQUERDO */
 .left-panel { 
-  flex: 1; 
-  position: relative; /* Necessário para posicionar o overlay */
-  display: flex; align-items: center; justify-content: center; 
-  color: white; padding: 40px; overflow: hidden; 
-  /* Fallback se a imagem não carregar */
-  background: #10b981; 
+  flex: 1; position: relative; display: flex; align-items: center; justify-content: center; 
+  color: white; padding: 40px; overflow: hidden; background: #10b981; 
 }
 
-/* Imagens */
 .bg-image {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  background-size: cover; background-position: center;
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center;
   opacity: 0; transition: opacity 1.5s ease-in-out; z-index: 1;
 }
 .bg-image.active { opacity: 1; }
 
-/* OVERLAY VERDE (MUDANÇA AQUI) */
 .overlay {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  /* Gradiente Verde semi-transparente */
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(5, 150, 105, 0.85) 100%);
-  z-index: 2; /* Fica acima da imagem */
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(5, 150, 105, 0.85) 100%); z-index: 2; 
 }
 
-/* Texto acima de tudo */
 .brand-content { z-index: 3; max-width: 400px; text-align: center; position: relative; }
 .brand-content h1 { font-size: 3rem; margin-bottom: 1rem; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 .tagline { font-size: 1.2rem; opacity: 0.95; margin-bottom: 2rem; }
 
-/* LADO DIREITO */
 .right-panel { flex: 1; display: flex; align-items: center; justify-content: center; background-color: #f9fafb; }
 .auth-card { width: 100%; max-width: 400px; padding: 40px; }
 .auth-header { margin-bottom: 2rem; }
@@ -169,7 +179,6 @@ const handleRegister = async () => {
 input { width: 100%; padding: 0.9rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; outline: none; transition: border 0.2s; box-sizing: border-box; }
 input:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
 
-/* BOTÃO VERDE */
 .btn-primary { width: 100%; background-color: #10b981; color: white; padding: 1rem; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: background 0.2s; }
 .btn-primary:hover { background-color: #059669; }
 

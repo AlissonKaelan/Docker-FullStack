@@ -1,22 +1,18 @@
 import axios from 'axios';
 import router from '../router';
 
+const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+
 const http = axios.create({
-    // 1. GARANTIA DE IP: Usa o IP da rede em vez de localhost (para o celular funcionar)
-    baseURL: import.meta.env.VITE_API_URL || 'http://192.168.1.44:8000/api',
-
-    // 2. O PULO DO GATO: Permite envio de Cookies (CSRF e Sessão)
-    // Sem isso, o navegador bloqueia o login na primeira tentativa.
-    withCredentials: true,
-
+    baseURL: baseURL,
+    withCredentials: true, // Permite receber os cookies
+    withXSRFToken: true,   // Permite LER o cookie e enviar no cabeçalho X-XSRF-TOKEN
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        // Ajuda o Laravel a identificar que é uma requisição Ajax
         'X-Requested-With': 'XMLHttpRequest' 
     }
 });
-
 // Interceptador: Anexa o token Bearer (para rotas da API)
 http.interceptors.request.use(config => {
     const token = localStorage.getItem('token');
