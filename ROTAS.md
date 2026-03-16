@@ -1,6 +1,3 @@
-### 2. 📄 Arquivo `ROTAS.md`
-
-```markdown
 # 📑 Documentação Técnica das Rotas
 
 Resumo técnico para integração Frontend <-> Backend.
