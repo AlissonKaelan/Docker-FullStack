@@ -1,6 +1,3 @@
-### 1. 📄 Arquivo `README.md`
-
-```markdown
 # 🚀 Docker FullStack Ecosystem: Kanban & Finance
 
 Este repositório contém um ecossistema de aplicações integradas (Gerenciamento de Projetos + Gestão Financeira + Hábitos) desenvolvido com **Laravel API** e **Vue.js 3**, rodando inteiramente em **Docker**.
