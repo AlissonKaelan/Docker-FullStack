@@ -146,4 +146,4 @@ VITE_API_URL=[http://192.168.1.](http://192.168.1.)X:8000/api
 
 * [ ] Exportação de Relatórios PDF
 
-> 🔗 Para detalhes técnicos dos endpoints, consulte o arquivo [ROTAS.md](https://www.google.com/search?q=./ROTAS.md).
+> 🔗 Para detalhes técnicos dos endpoints, consulte o arquivo [ROTAS.md]([https://www.google.com/search?q=./ROTAS.md](https://github.com/AlissonKaelan/Docker-FullStack/blob/main/ROTAS.md)).
