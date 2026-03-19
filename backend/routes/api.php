@@ -7,6 +7,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\VaultItemController;
 
 // --- ROTAS PÚBLICAS (Aberta para todos) ---
 Route::post('/register', [AuthController::class, 'register']);
@@ -60,4 +61,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/daily/reset', [\App\Http\Controllers\DailyTaskController::class, 'resetDay']);
 
     Route::apiResource('categories', \App\Http\Controllers\CategoryController::class);
+
+    Route::post('/vault', [VaultItemController::class, 'store']);
 });
