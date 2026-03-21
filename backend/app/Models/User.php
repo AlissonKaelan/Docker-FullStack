@@ -67,4 +67,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Card::class);
     }
+
+    public function vaultItems(): HasMany
+    {
+        return $this->hasMany(VaultItem::class);
+    }
 }
