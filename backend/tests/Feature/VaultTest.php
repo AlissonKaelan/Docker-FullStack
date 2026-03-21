@@ -10,34 +10,44 @@ use PHPUnit\Framework\Attributes\Test;
 
 class VaultTest extends TestCase
 {
-    use RefreshDatabase; // Limpa o banco a cada teste
+    use RefreshDatabase; // Apenas isso fica aqui!
 
-    
+    #[Test]
     public function a_user_can_create_a_vault_item()
     {
-        // 1. Criamos um usuário de teste
         $user = User::factory()->create();
-
-        // 2. Simulamos que ele está logado
         $this->actingAs($user);
 
-        // 3. Dados que queremos salvar no cofre
         $payload = [
             'title' => 'Minha Senha do Wi-Fi',
             'content' => '12345678',
-            'type' => 'note' // pode ser 'note' ou 'link'
+            'type' => 'note' 
         ];
 
-        // 4. Fazemos uma requisição POST para a API
         $response = $this->postJson('/api/vault', $payload);
-
-        // 5. Verificamos se deu certo (Status 201 - Created)
         $response->assertStatus(201);
-
-        // 6. Verificamos se o dado existe no banco de dados
         $this->assertDatabaseHas('vault_items', [
             'user_id' => $user->id,
             'title' => 'Minha Senha do Wi-Fi'
         ]);
+    }
+
+    #[Test]
+    public function a_user_can_list_their_own_vault_items()
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        VaultItem::factory()->count(3)->create([
+            'user_id' => $user->id
+        ]);
+
+        VaultItem::factory()->count(2)->create([
+            'user_id' => $otherUser->id
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/api/vault');
+        $response->assertStatus(200);
+        $response->assertJsonCount(3); 
     }
 }

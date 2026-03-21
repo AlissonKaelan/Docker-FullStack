@@ -62,5 +62,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('categories', \App\Http\Controllers\CategoryController::class);
 
+    Route::get('/vault', [VaultItemController::class, 'index']);
+
     Route::post('/vault', [VaultItemController::class, 'store']);
 });
