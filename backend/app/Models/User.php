@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
@@ -71,5 +72,11 @@ class User extends Authenticatable
     public function vaultItems(): HasMany
     {
         return $this->hasMany(VaultItem::class);
+    }
+    // Define que um Usuário pode pertencer a muitos Workspaces
+    public function workspaces(): BelongsToMany
+    {
+        // O segundo parâmetro força o nome da tabela
+        return $this->belongsToMany(Workspace::class, 'workspace_user')->withPivot('role')->withTimestamps();
     }
 }

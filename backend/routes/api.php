@@ -8,6 +8,7 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\VaultItemController;
+use App\Http\Controllers\WorkspaceMemberController;
 
 // --- ROTAS PÚBLICAS (Aberta para todos) ---
 Route::post('/register', [AuthController::class, 'register']);
@@ -65,4 +66,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/vault', [VaultItemController::class, 'index']);
 
     Route::post('/vault', [VaultItemController::class, 'store']);
+
+    // Rota para adicionar um membro ao Workspace
+    Route::post('/workspaces/{workspace}/members', [WorkspaceMemberController::class, 'store']);
 });
