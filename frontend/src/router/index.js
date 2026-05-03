@@ -8,7 +8,7 @@ import KanbanBoard from '../components/KanbanBoard.vue'
 import FinanceView from '../views/FinanceView.vue' 
 import HomeView from '../views/HomeView.vue'
 import DailyView from '../views/DailyView.vue'
-
+import WorkspaceView from '../views/WorkspaceView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,42 +35,48 @@ const router = createRouter({
       component: KanbanBoard,
       meta: { requiresAuth: true }
     },
-    // --- NOVA ROTA INSERIDA AQUI NA LISTA ÚNICA ---
     {
       path: '/finance',
       name: 'finance',
-      component: FinanceView, // Usa o componente importado acima
+      component: FinanceView, 
       meta: { requiresAuth: true }
     },
+    // --- NOVA ROTA DE WORKSPACE ---
     {
-      path: '/',
-      redirect: '/home'
+      path: '/workspace/:id',
+      name: 'workspace',
+      component: WorkspaceView,
+      props: true, // Crucial: Transforma o :id da URL em uma prop para a WorkspaceView
+      meta: { requiresAuth: true } // Blindado pelo seu AuthStore!
     },
     {
       path: '/daily',
       name: 'daily',
-      component: DailyView
+      component: DailyView,
+      // Se essa for uma tela interna da plataforma, lembre-se de colocar a meta de auth aqui também!
+      // meta: { requiresAuth: true }
+    },
+    {
+      path: '/',
+      redirect: '/home'
     }
   ]
 })
 
-// --- O GUARDIÃO DA ROTA ---
+// --- O GUARDIÃO DA ROTA (Mantido intacto) ---
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
 
-  // 1. PRIMEIRO DE TUDO: Sincroniza o Pinia com o localStorage atual
   authStore.checkToken();
 
-  // 2. Agora, toma a decisão com base na verdade absoluta
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next('/login'); // Bloqueia e manda pro login
+    next('/login'); 
   } 
-  // 3. Bônus: Se tentar ir pro login já estando logado, manda pra home
   else if (to.path === '/login' && authStore.isAuthenticated) {
     next('/home');
   } 
   else {
-    next(); // Passagem livre
+    next(); 
   }
 })
 
