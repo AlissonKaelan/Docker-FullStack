@@ -1,13 +1,14 @@
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig, loadEnv } from 'vite' // Importante: loadEnv
 import vue from '@vitejs/plugin-vue'
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig(({ mode }) => {
   // Carrega as variáveis do arquivo .env (se existir)
   const env = loadEnv(mode, process.cwd(), '')
 
   return {
-    plugins: [vue()],
+    plugins: [vue(),tailwindcss(),],
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url))
