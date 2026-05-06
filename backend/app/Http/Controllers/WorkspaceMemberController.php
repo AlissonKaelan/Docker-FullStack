@@ -12,23 +12,28 @@ class WorkspaceMemberController extends Controller
     // ele já busca o projeto no banco de dados e injeta aqui automaticamente!
     public function store(Request $request, Workspace $workspace)
     {
-        // 1. Validação de Segurança (Nunca confie no Front-end!)
+        // 1. Valida os dados de entrada
         $request->validate([
-            'email' => 'required|email|exists:users,email', // Garante que o e-mail existe no nosso sistema
-            'role' => 'required|in:editor,viewer' // Garante que não inventem permissões malucas
+            'email' => 'required|email|exists:users,email',
+            'role' => 'required|in:admin,editor,viewer',
         ]);
 
-        // 2. Buscamos o usuário no banco usando o e-mail fornecido
-        $userToInvite = User::where('email', $request->email)->first();
+        // 2. Busca o usuário pelo email
+        $user = User::where('email', $request->email)->first();
 
-        // 3. Salvamos a relação na tabela pivot (igual fizemos no Tinker!)
-        $workspace->users()->attach($userToInvite->id, [
-            'role' => $request->role
-        ]);
+        // 3. A MÁGICA AQUI: Verifica se o usuário já está no workspace
+        if ($workspace->users()->where('user_id', $user->id)->exists()) {
+            return response()->json([
+                'message' => 'Este usuário já é membro deste projeto.'
+            ], 409); // 409 = Conflict
+        }
 
-        // 4. Retornamos status 200 OK
+        // 4. Adiciona o usuário na tabela pivot com o cargo
+        $workspace->users()->attach($user->id, ['role' => $request->role]);
+
         return response()->json([
-            'message' => 'Membro adicionado com sucesso!'
-        ], 200);
+            'message' => 'Membro adicionado com sucesso!',
+            'user' => $user
+        ], 201);
     }
 }

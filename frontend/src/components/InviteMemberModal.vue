@@ -91,7 +91,8 @@
 <script setup>
 import { ref } from 'vue';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue';
-import http from '@/services/http'; // Usa o SEU axios configurado com o Token!
+import http from '@/services/http';
+import { notify } from '@/utils/alert';
 
 // Estado do Componente
 const isOpen = ref(false);
@@ -114,27 +115,27 @@ const fecharModal = () => {
 };
 
 const enviarConvite = async () => {
-  isLoading.value = true;
-  
   try {
     const response = await http.post(`/workspaces/${props.workspaceId}/members`, {
       email: email.value,
       role: role.value
     });
+
+    // Chama o Toast verde de sucesso!
+    notify('success', response.data.message || 'Convite enviado com sucesso!');
     
-    // Aqui você pode colocar uma biblioteca de Toast no futuro (ex: Vue Toastification)
-    alert('Operador adicionado com sucesso!');
-    fecharModal();
-    
+    // Fecha o modal e limpa os campos
+    emit('close'); 
+    email.value = '';
+    role.value = 'viewer';
+
   } catch (error) {
-    if (error.response?.status === 422) {
-      alert('E-mail não encontrado no sistema ou formato inválido.');
+    // Chama o Toast vermelho de erro!
+    if (error.response && error.response.data && error.response.data.message) {
+      notify('error', error.response.data.message);
     } else {
-      alert('Erro ao enviar o convite. Tente novamente.');
+      notify('error', 'Erro de conexão. Tente novamente.');
     }
-    console.error(error);
-  } finally {
-    isLoading.value = false;
   }
 };
 </script>
