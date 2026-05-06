@@ -8,27 +8,33 @@ O objetivo é criar uma plataforma unificada onde o esforço (Tarefas) se conect
 
 ### 🏗️ Módulos do Sistema
 
-#### 1. 🔐 Core & Autenticação (Hub Central)
+#### 1. 🏢 Módulo de Workspaces (Hub Colaborativo)
+* **Arquitetura SaaS:** O sistema agora opera baseado em Workspaces (Projetos).
+* **Multiusuário:** Um usuário pode criar múltiplos Workspaces ou ser convidado para projetos de terceiros.
+* **Controle de Acesso (ACL):** Níveis de permissão granulares (Admin, Editor, Leitor) para cada membro convidado.
+* **Isolamento Absoluto:** Tarefas, Finanças e Hábitos agora pertencem ao Workspace, garantindo que membros vejam apenas o que lhes é permitido.
+
+#### 2. 🔐 Core & Autenticação (Hub Central)
 * **Login & Registro Moderno:** Design "Split-Screen" com validação visual e feedback instantâneo.
 * **Hub Unificado:** Dashboard com "Hero Header" que centraliza o acesso aos módulos.
 * **Isolamento de Dados:** Arquitetura Multi-tenancy (cada usuário acessa apenas seus dados).
 * **Cross-Device Ready:** Sessões e cookies (Sanctum) otimizados para funcionar de forma fluida tanto no PC quanto no navegador do celular na mesma rede local.
 
-#### 2. 📋 Módulo Kanban (Gerenciamento de Tarefas)
+#### 3. 📋 Módulo Kanban (Gerenciamento de Tarefas)
 * **Quadros Dinâmicos:** Criação/Exclusão de colunas personalizadas.
 * **Drag & Drop Inteligente:** Movimentação fluida. Tarefas em colunas personalizadas não são movidas automaticamente sem permissão.
 * **Progresso Granular:** Slider de porcentagem (0-100%) e Checklist de Subtarefas.
 * **Gestão de Subtarefas:** Adicionar, editar texto, marcar como feito e excluir itens individuais.
 * **Automação:** Cards movidos para "Done" completam automaticamente suas subtarefas.
 
-#### 3. 💰 Módulo Financeiro (Gestão de Custos)
+#### 4. 💰 Módulo Financeiro (Gestão de Custos)
 * **Dashboard Visual:** Gráficos interativos (Chart.js) de Entradas vs Saídas.
 * **Custos por Tarefa:** Integração total com o Kanban, permitindo lançar despesas diretamente dentro de um Card específico.
 * **Categorização Inteligente:** Criação de categorias personalizadas (Ex: Alimentação, Lazer) com cores visuais.
 * **Parcelamento:** Lançamento automático de despesas parceladas (Ex: 10x de R$ 100).
 * **Cálculo em Tempo Real:** O saldo atualiza instantaneamente a cada operação.
 
-#### 4. ☀️ Módulo Diário (Hábitos & To-Do)
+#### 5. ☀️ Módulo Diário (Hábitos & To-Do)
 * **Foco Diário:** Lista de tarefas rápida com barra de progresso.
 * **Hábitos Recorrentes:** Funcionalidade de tarefas que se repetem (ex: Beber Água).
 * **Reset Automático:** Botão para iniciar um novo dia, limpando tarefas concluídas.

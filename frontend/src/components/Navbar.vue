@@ -7,6 +7,9 @@
       </div>
       
       <div class="header-actions">
+        <router-link to="/profile" class="btn-theme" style="text-decoration: none; font-size: 1rem;" title="Meu Perfil">
+          👤
+        </router-link>
         <button @click="toggleTheme" class="btn-theme" :title="isDark ? 'Mudar para Claro' : 'Mudar para Escuro'">
           {{ isDark ? '☀️' : '🌙' }}
         </button>

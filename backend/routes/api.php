@@ -9,6 +9,7 @@ use App\Http\Controllers\CardController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\VaultItemController;
 use App\Http\Controllers\WorkspaceMemberController;
+use App\Http\Controllers\WorkspaceController;
 
 // --- ROTAS PÚBLICAS (Aberta para todos) ---
 Route::post('/register', [AuthController::class, 'register']);
@@ -27,7 +28,13 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
 
+    Route::put('/user', [\App\Http\Controllers\UserController::class, 'update']);
+
     Route::post('/logout', [AuthController::class, 'logout']);
+    
+    // Rotas de Workspace
+    Route::get('/workspaces', [WorkspaceController::class, 'index']);
+    Route::post('/workspaces', [WorkspaceController::class, 'store']);
 
     // KANBAN
     Route::get('/kanban', [KanbanController::class, 'index']);

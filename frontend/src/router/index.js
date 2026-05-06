@@ -9,6 +9,7 @@ import FinanceView from '../views/FinanceView.vue'
 import HomeView from '../views/HomeView.vue'
 import DailyView from '../views/DailyView.vue'
 import WorkspaceView from '../views/WorkspaceView.vue'
+import ProfileView from '../views/ProfileView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -29,6 +30,11 @@ const router = createRouter({
       name: 'register',
       component: RegisterView
     },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: ProfileView
+    },  
     {
       path: '/kanban',
       name: 'kanban',

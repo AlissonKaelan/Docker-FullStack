@@ -21,7 +21,18 @@ Resumo técnico para integração Frontend <-> Backend.
 
 ---
 
-### 📋 2. Módulo Kanban
+### 🏢 2. Módulo Workspace & Colaboração
+*Headers necessários:* `Authorization: Bearer {token}`
+
+| Método | Endpoint | Descrição | Payload (Body) |
+| :--- | :--- | :--- | :--- |
+| **GET** | `/workspaces` | Lista todos os projetos do usuário logado | N/A |
+| **POST** | `/workspaces` | Cria um novo Workspace | `name` (string) |
+| **POST** | `/workspaces/{id}/members` | Convida usuário para o projeto | `email` (string), `role` (admin, editor, viewer) |
+
+---
+
+### 📋 3. Módulo Kanban
 *Headers necessários:* `Authorization: Bearer {token}`
 
 | Método | Endpoint | Descrição | Payload (Body) |
@@ -39,7 +50,7 @@ Resumo técnico para integração Frontend <-> Backend.
 
 ---
 
-### 💰 3. Módulo Financeiro
+### 💰 4. Módulo Financeiro
 *Headers necessários:* `Authorization: Bearer {token}`
 
 #### Transações
@@ -60,7 +71,7 @@ Resumo técnico para integração Frontend <-> Backend.
 
 ---
 
-### ☀️ 4. Módulo Daily (Hábitos)
+### ☀️ 5. Módulo Daily (Hábitos)
 *Headers necessários:* `Authorization: Bearer {token}`
 
 | Método | Endpoint | Descrição | Payload (Body) |
