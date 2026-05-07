@@ -1,19 +1,22 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
-// Importar os componentes
+// ==========================================
+// IMPORTAÇÃO DE TODAS AS TELAS E COMPONENTES
+// ==========================================
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
-import KanbanBoard from '../components/KanbanBoard.vue'
-import FinanceView from '../views/FinanceView.vue' 
 import HomeView from '../views/HomeView.vue'
-import DailyView from '../views/DailyView.vue'
+import ProfileView from '../views/ProfileView.vue'
 import WorkspaceView from '../views/WorkspaceView.vue'
-import ProfileView from '../views/ProfileView.vue';
+import FinanceView from '../views/FinanceView.vue' 
+import DailyView from '../views/DailyView.vue'
+import KanbanBoard from '../components/KanbanBoard.vue' 
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    // --- ROTAS GLOBAIS ---
     {
       path: '/home',
       name: 'home',
@@ -33,35 +36,39 @@ const router = createRouter({
     {
       path: '/profile',
       name: 'profile',
-      component: ProfileView
+      component: ProfileView,
+      meta: { requiresAuth: true } 
     },  
-    {
-      path: '/kanban',
-      name: 'kanban',
-      component: KanbanBoard,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/finance',
-      name: 'finance',
-      component: FinanceView, 
-      meta: { requiresAuth: true }
-    },
-    // --- NOVA ROTA DE WORKSPACE ---
+
+    // --- 1. A ROTA DO PAINEL DO PROJETO ---
     {
       path: '/workspace/:id',
-      name: 'workspace',
+      name: 'workspace.dashboard',
       component: WorkspaceView,
-      props: true, // Crucial: Transforma o :id da URL em uma prop para a WorkspaceView
-      meta: { requiresAuth: true } // Blindado pelo seu AuthStore!
+      meta: { requiresAuth: true }
+    },
+
+    // --- 2. AS ROTAS DOS MÓDULOS ---
+    {
+      path: '/workspace/:id/kanban',
+      name: 'workspace.kanban',
+      component: KanbanBoard, 
+      meta: { requiresAuth: true } 
     },
     {
-      path: '/daily',
-      name: 'daily',
-      component: DailyView,
-      // Se essa for uma tela interna da plataforma, lembre-se de colocar a meta de auth aqui também!
-      // meta: { requiresAuth: true }
+      path: '/workspace/:id/finance',
+      name: 'workspace.finance',
+      component: FinanceView,
+      meta: { requiresAuth: true } 
     },
+    {
+      path: '/workspace/:id/daily',
+      name: 'workspace.daily',
+      component: DailyView,
+      meta: { requiresAuth: true } 
+    },
+    
+    // --- REDIRECIONAMENTO PADRÃO ---
     {
       path: '/',
       redirect: '/home'
@@ -69,19 +76,25 @@ const router = createRouter({
   ]
 })
 
-// --- O GUARDIÃO DA ROTA (Mantido intacto) ---
+// ==========================================
+// O GUARDIÃO DA ROTA (MIDDLEWARE FRONTEND)
+// ==========================================
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
 
+  // Tenta puxar o token do localStorage pro estado
   authStore.checkToken();
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    // Se a rota exige login e não tem usuário, chuta pro login
     next('/login'); 
   } 
   else if (to.path === '/login' && authStore.isAuthenticated) {
+    // Se tentar acessar a tela de login já estando logado, joga pra home
     next('/home');
   } 
   else {
+    // Caso contrário, deixa passar normalmente
     next(); 
   }
 })

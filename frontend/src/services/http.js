@@ -1,28 +1,38 @@
 import axios from 'axios';
 import router from '../router';
 
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+// A MÁGICA: Pega o IP ou domínio que está escrito lá na barra de endereços do navegador!
+const host = window.location.hostname; 
+const baseURL = `http://${host}:8000/api`;
 
 const http = axios.create({
     baseURL: baseURL,
-    withCredentials: true, // Permite receber os cookies
-    withXSRFToken: true,   // Permite LER o cookie e enviar no cabeçalho X-XSRF-TOKEN
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest' 
     }
 });
-// Interceptador: Anexa o token Bearer (para rotas da API)
+
+// Interceptador: Anexa o token Bearer e o Workspace-Id
 http.interceptors.request.use(config => {
+    // 1. Lógica do Token (Mantida)
     const token = localStorage.getItem('token');
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // 2. A MÁGICA NOVA: Descobre em qual Workspace o usuário está pela URL
+    // Procura na barra de endereços algo como "/workspace/5" e extrai o "5"
+    const match = window.location.pathname.match(/\/workspace\/(\d+)/);
+    if (match) {
+        config.headers['Workspace-Id'] = match[1]; // Gruda o crachá no cabeçalho!
+    }
+
     return config;
 });
 
-// Interceptador: Tratamento de erros globais
+// Interceptador: Tratamento de erros globais (Mantido)
 http.interceptors.response.use(response => {
     return response;
 }, error => {
