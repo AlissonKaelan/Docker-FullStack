@@ -2,6 +2,8 @@
 
 Este repositório contém um ecossistema de aplicações integradas (Gerenciamento de Projetos + Gestão Financeira + Hábitos) desenvolvido com **Laravel API** e **Vue.js 3**, rodando inteiramente em **Docker**.
 
+A arquitetura foi projetada para ser **Agnóstica de Rede (Stateless)**. Isso significa que você pode rodar o projeto no seu PC e acessá-lo imediatamente do seu celular ou tablet na mesma rede Wi-Fi, sem precisar ficar reconfigurando variáveis de IP.
+
 ## 🎯 Visão do Projeto
 
 O objetivo é criar uma plataforma unificada onde o esforço (Tarefas) se conecta ao custo (Finanças) e à rotina diária (Hábitos), com suporte a múltiplos usuários, autenticação robusta e interface moderna.
@@ -9,35 +11,28 @@ O objetivo é criar uma plataforma unificada onde o esforço (Tarefas) se conect
 ### 🏗️ Módulos do Sistema
 
 #### 1. 🏢 Módulo de Workspaces (Hub Colaborativo)
-* **Arquitetura SaaS:** O sistema agora opera baseado em Workspaces (Projetos).
-* **Multiusuário:** Um usuário pode criar múltiplos Workspaces ou ser convidado para projetos de terceiros.
-* **Controle de Acesso (ACL):** Níveis de permissão granulares (Admin, Editor, Leitor) para cada membro convidado.
-* **Isolamento Absoluto:** Tarefas, Finanças e Hábitos agora pertencem ao Workspace, garantindo que membros vejam apenas o que lhes é permitido.
+* **Arquitetura SaaS:** O sistema opera baseado em Workspaces (Projetos).
+* **Multiusuário:** Criação de múltiplos projetos e convites de acesso.
+* **Controle de Acesso (ACL):** Níveis de permissão granulares (Admin, Editor, Leitor).
+* **Isolamento Absoluto:** Tarefas e Finanças pertencem exclusivamente ao Workspace ativo.
 
 #### 2. 🔐 Core & Autenticação (Hub Central)
-* **Login & Registro Moderno:** Design "Split-Screen" com validação visual e feedback instantâneo.
-* **Hub Unificado:** Dashboard com "Hero Header" que centraliza o acesso aos módulos.
-* **Isolamento de Dados:** Arquitetura Multi-tenancy (cada usuário acessa apenas seus dados).
-* **Cross-Device Ready:** Sessões e cookies (Sanctum) otimizados para funcionar de forma fluida tanto no PC quanto no navegador do celular na mesma rede local.
+* **Login & Registro Moderno:** Design "Split-Screen" responsivo.
+* **API Stateless:** Autenticação via Bearer Token puro, imune a bloqueios de CSRF cross-device.
+* **Cross-Device Ready:** Funciona de forma fluida simultaneamente no PC, Celular ou Tablet sem falhas de Sessão.
 
 #### 3. 📋 Módulo Kanban (Gerenciamento de Tarefas)
-* **Quadros Dinâmicos:** Criação/Exclusão de colunas personalizadas.
-* **Drag & Drop Inteligente:** Movimentação fluida. Tarefas em colunas personalizadas não são movidas automaticamente sem permissão.
-* **Progresso Granular:** Slider de porcentagem (0-100%) e Checklist de Subtarefas.
-* **Gestão de Subtarefas:** Adicionar, editar texto, marcar como feito e excluir itens individuais.
-* **Automação:** Cards movidos para "Done" completam automaticamente suas subtarefas.
+* **Quadros Dinâmicos e WebSockets:** Atualização em tempo real das colunas.
+* **Drag & Drop Inteligente:** Movimentação fluida entre as etapas.
+* **Gestão de Subtarefas:** Adicionar, editar e marcar como feito com barra de progresso.
 
 #### 4. 💰 Módulo Financeiro (Gestão de Custos)
 * **Dashboard Visual:** Gráficos interativos (Chart.js) de Entradas vs Saídas.
-* **Custos por Tarefa:** Integração total com o Kanban, permitindo lançar despesas diretamente dentro de um Card específico.
-* **Categorização Inteligente:** Criação de categorias personalizadas (Ex: Alimentação, Lazer) com cores visuais.
-* **Parcelamento:** Lançamento automático de despesas parceladas (Ex: 10x de R$ 100).
-* **Cálculo em Tempo Real:** O saldo atualiza instantaneamente a cada operação.
+* **Custos por Tarefa:** Vinculação de despesas diretamente a um Card do Kanban.
+* **Parcelamento e Categorização:** Automação de parcelas e gestão visual por cores.
 
 #### 5. ☀️ Módulo Diário (Hábitos & To-Do)
-* **Foco Diário:** Lista de tarefas rápida com barra de progresso.
-* **Hábitos Recorrentes:** Funcionalidade de tarefas que se repetem (ex: Beber Água).
-* **Reset Automático:** Botão para iniciar um novo dia, limpando tarefas concluídas.
+* **Foco Diário & Reset Automático:** Lista rápida para o dia e limpeza automática de concluídos.
 
 ---
 
@@ -45,108 +40,97 @@ O objetivo é criar uma plataforma unificada onde o esforço (Tarefas) se conect
 
 | Camada | Tecnologia | Detalhes |
 | :--- | :--- | :--- |
-| **Backend** | PHP 8.2, Laravel 11 | API RESTful, Sanctum, Eloquent ORM |
+| **Backend** | PHP 8.2, Laravel 11 | API RESTful, Autenticação Token, Eloquent ORM |
 | **Testes** | Pest PHP | Testes Automatizados (Feature/Unit) |
-| **Frontend** | Vue.js 3 | Composition API, Pinia, Vue Router |
-| **Libs Front**| Chart.js, SweetAlert2 | Gráficos e Alertas Modais |
+| **Frontend** | Vue.js 3 | Composition API, Pinia, Vue Router, Vite |
+| **Tempo Real**| Laravel Reverb | WebSockets Nativos |
 | **UX/UI** | CSS3 Scoped | Flexbox, Grid, Dark Mode Ready |
-| **Banco** | MySQL 8 | Relacionamentos e Migrations |
-| **DevOps** | Docker | Nginx, PHP-FPM, Node Container |
+| **DevOps** | Docker | Containers isolados (Nginx, PHP-FPM, Node, MySQL) |
 
 ---
 
-## 🕹️ Guia de Comandos (Ciclo de Vida)
+## 🚀 Guia de Instalação e Execução
 
-### 🟢 1. Iniciar a Aplicação
-Rode este comando para subir os containers em segundo plano.
+### 1. Clonar e Iniciar
 ```bash
+git clone [https://github.com/SeuUsuario/Docker-FullStack.git](https://github.com/SeuUsuario/Docker-FullStack.git)
+cd Docker-FullStack
 docker compose up -d
-
 ```
 
-*Acesse o frontend via IP local definido no `.env` (ex: `http://192.168.1.X:5173`).*
-
-### 🧪 2. Rodar Testes Automatizados
-
-O projeto conta com testes de integração usando Pest PHP.
-
-```bash
-docker compose exec backend ./vendor/bin/pest
-
-```
-
-### 🔴 3. Finalizar (Desligar Tudo)
-
-```bash
-docker compose down
-
-```
-
-### 🛠️ 4. Comandos de Manutenção
-
-**Instalar Dependências (Após um `git pull`):**
-
+### 2. Instalar Dependências
 ```bash
 docker compose exec backend composer install
 docker compose exec frontend npm install
-
 ```
 
-**Rodar Migrations (Atualizar o Banco):**
-
+### 3. Configurar o Ambiente (.env)
+Copie os arquivos de exemplo:
 ```bash
-docker compose exec backend php artisan migrate
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
 
+**Configuração Crucial do Backend (`backend/.env`):**
+Como o frontend gerencia as requisições dinamicamente, garanta que as variáveis de segurança baseadas em cookies estejam *vazias*:
+```ini
+SANCTUM_STATEFUL_DOMAINS=
+SESSION_DOMAIN=
+```
+
+**Configuração do Frontend (`frontend/.env`):**
+Não é necessário colocar IP rígido.
+```ini
+VITE_API_URL=http://localhost:8000/api
+VITE_REVERB_HOST=localhost
+```
+
+### 4. Preparar o Banco de Dados e Chaves
+```bash
+docker compose exec backend php artisan key:generate
+docker compose exec backend php artisan migrate:fresh --seed
+```
+
+### 5. Iniciar os WebSockets (Tempo Real)
+```bash
+docker compose exec -d backend php artisan reverb:start --host="0.0.0.0" --port="8080"
 ```
 
 ---
 
-## 📱 Configuração de Rede Local (PC e Celular)
+## 📱 Como acessar de outro dispositivo (Celular/Tablet)
 
-Para acessar o sistema via celular na mesma rede Wi-Fi e garantir que o Login (Sanctum) funcione sem bloqueios de CORS ou Cookies, configure seus arquivos `.env` com o seu IP da rede local (Ex: `192.168.1.X`):
+O frontend foi programado com rotatividade de Host automática (`window.location.hostname`). Para testar no celular:
 
-**No `backend/.env`:**
-
-```ini
-APP_URL=[http://192.168.1.](http://192.168.1.)X:8000
-FRONTEND_URL=[http://192.168.1.](http://192.168.1.)X:5173
-SESSION_DOMAIN=null
-SESSION_SECURE_COOKIE=false
-SESSION_SAME_SITE=lax
-SANCTUM_STATEFUL_DOMAINS=192.168.1.X:5173,localhost:5173,192.168.1.X
-
-```
-
-**No `frontend/.env`:**
-
-```ini
-VITE_API_URL=[http://192.168.1.](http://192.168.1.)X:8000/api
-
-```
-
-*Após alterar, rode `docker compose restart frontend` e limpe o cache de rotas do backend (`php artisan route:clear`).*
+1. Garanta que o PC e o celular estão na mesma rede Wi-Fi.
+2. Descubra o IP do seu PC (ex: `192.168.1.5`). No Windows, use `ipconfig`. No Linux, `ip addr`.
+3. Abra o navegador do celular e digite: `http://192.168.1.5:5173`
+4. A API e os WebSockets se adaptarão automaticamente para esse endereço!
 
 ---
 
-## 📅 Dev Log (Roadmap)
+## 🚑 Troubleshooting (Resolução de Problemas Comuns)
 
-### ✅ Concluído
+Se você tentar acessar do celular e encontrar problemas, verifique o checklist abaixo:
 
-* [x] Configuração Docker (Nginx, PHP, MySQL, Node)
-* [x] **Backend:** CRUD Kanban, Subtarefas, Financeiro, Daily e Auth
-* [x] **Frontend:** Integração total com Axios Service (`http.js`) com `withCredentials`
-* [x] **UX/UI:** Redesign completo e Gráficos (Chart.js)
-* [x] **Features:** Categorias Financeiras, Parcelamento, Subtarefas Editáveis
-* [x] **Integração:** Vincular um Custo Financeiro a um Card do Kanban
-* [x] **Qualidade:** Testes Automatizados com Pest PHP
+### Erro 1: A página fica carregando e dá `TIMEOUT`
+* **Causa:** O Firewall do Windows está bloqueando as portas do Docker.
+* **Solução:** Abra o PowerShell como Administrador e rode:
+  ```powershell
+  New-NetFirewallRule -DisplayName "Docker App Ports" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 5173,8000,8080
+  ```
 
-### 🚧 Em Desenvolvimento
+### Erro 2: Estou no WSL2 e o celular ainda dá `TIMEOUT`
+* **Causa:** O WSL2 não está repassando a porta da placa Wi-Fi para o Docker.
+* **Solução:** Abra o PowerShell como Administrador e crie a ponte manual para as portas:
+  ```powershell
+  netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=5173 connectaddress=127.0.0.1 connectport=5173
+  netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=8000 connectaddress=127.0.0.1 connectport=8000
+  ```
 
-* [ ] Refatoração e limpeza de código
-* [ ] Melhorias de acessibilidade
-
-### 🔮 Futuro
-
-* [ ] Exportação de Relatórios PDF
-
-> 🔗 Para detalhes técnicos dos endpoints, consulte o arquivo [ROTAS.md](https://github.com/AlissonKaelan/Docker-FullStack/blob/main/ROTAS.md).
+### Erro 3: Erro 419 (CSRF Token Mismatch) ao fazer Login
+* **Causa:** O Laravel está tentando usar Sessões (Cookies) numa requisição externa.
+* **Solução:**
+  1. No `backend/.env`, garanta que `SANCTUM_STATEFUL_DOMAINS=` está totalmente vazio.
+  2. Rode no terminal do PC: `docker compose exec backend php artisan config:clear`.
+  3. Acesse por uma Aba Anônima no celular para limpar o cache antigo.

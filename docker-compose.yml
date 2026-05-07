@@ -9,6 +9,8 @@ services:
         uid: 1000
     container_name: app_backend
     restart: unless-stopped
+    ports:
+      - "8080:8080"
     volumes:
       - ./backend:/var/www
     networks:
