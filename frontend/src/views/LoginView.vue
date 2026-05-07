@@ -70,7 +70,8 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import http from '../services/http'; 
-import { useAuthStore } from '../stores/auth';
+import { useAuthStore } from '@/stores/auth';
+import { notify } from '@/utils/alert';
 
 const router = useRouter();
 const email = ref('');
@@ -103,20 +104,20 @@ const handleLogin = async () => {
   const authStore = useAuthStore();
 
   try {
-    // 1. Pede o cookie de forma limpa usando a nossa própria instância http
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-    const csrfUrl = apiUrl.replace('/api', '/sanctum/csrf-cookie');
+    // 1. FAZ O LOGIN DIRETO NA API (Sem pedir cookie antes!)
+    const response = await http.post('/login', { 
+        email: email.value, 
+        password: password.value 
+    });
     
-    await http.get(csrfUrl);
-
-    // 2. Faz o login
-    const response = await http.post('/login', { email: email.value, password: password.value });
-    
-    // 3. Sucesso
+    // 2. SUCESSO! PEGA O TOKEN
     const token = response.data.token;
     localStorage.setItem('token', token);
+    
+    // 3. ANEXA O TOKEN NO CABEÇALHO PARA AS PRÓXIMAS CHAMADAS
     http.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     authStore.checkToken();
+    
     await new Promise(resolve => setTimeout(resolve, 300));
     router.push('/');
 
@@ -130,7 +131,7 @@ const handleLogin = async () => {
         const primeiroCampo = Object.keys(erros)[0];
         errorMessage.value = erros[primeiroCampo][0];
       } else if (error.response.status === 401) {
-        errorMessage.value = 'Sessão expirada ou acesso negado.';
+        errorMessage.value = 'E-mail ou senha incorretos.';
       } else {
         errorMessage.value = error.response.data.message || 'Ocorreu um erro no servidor. Tente novamente mais tarde.';
       }

@@ -303,7 +303,7 @@ onMounted(() => {
   <div class="kanban-container">
     <div class="page-header">
         <div class="header-left">
-            <router-link to="/" class="back-btn">⬅ Voltar</router-link>
+            <router-link :to="'/workspace/' + $route.params.id" class="back-btn">⬅ Voltar para o Painel</router-link>
             <h1>Gestão de Tarefas</h1>
         </div>
     </div>

@@ -156,9 +156,12 @@ const saveTransaction = async () => {
         await http.post('/transactions', form.value);
         notify('success', 'Criado!'); 
     }
-    cancelEdit();
-    fetchData(); 
-  } catch (error) { notify('error', 'Erro ao salvar.'); }
+    cancelEdit();    // Limpa o formulário
+    await fetchData(); // Recarrega a lista e o saldo na tela na hora!
+    notify('success', 'Operação realizada!');
+    } catch (error) {
+        notify('error', 'Erro ao salvar');
+    }
 };
 
 const getCategoryColor = (catId) => {
@@ -187,7 +190,7 @@ onMounted(() => {
 
     <div class="page-header">
         <div class="header-left">
-            <router-link to="/" class="back-btn">⬅ Voltar</router-link>
+            <router-link :to="'/workspace/' + $route.params.id" class="back-btn">⬅ Voltar para o Painel</router-link>
             <h1>Gestão Financeira</h1>
         </div>
         <div class="month-selector">
@@ -235,8 +238,8 @@ onMounted(() => {
 
            <div class="select-group">
                <select v-model="form.category_id" class="input-modern">
-                   <option value="">Sem Categoria</option>
-                   <option 
+                    <option value="">Sem Categoria</option>
+                    <option 
                         v-for="cat in filteredCategories" 
                         :key="cat.id" 
                         :value="cat.id"

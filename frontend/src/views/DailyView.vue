@@ -100,7 +100,7 @@ onMounted(() => fetchTasks());
   <div class="daily-container">
     <div class="header-area">
       <div class="header-top">
-          <router-link to="/" class="back-link">⬅ Voltar</router-link>
+          <router-link :to="'/workspace/' + $route.params.id" class="back-link">⬅ Voltar para o Painel</router-link>
           <button @click="resetDay" class="btn-reset" title="Apaga concluídos e reseta recorrentes">
             🔄 Iniciar Novo Dia
           </button>
