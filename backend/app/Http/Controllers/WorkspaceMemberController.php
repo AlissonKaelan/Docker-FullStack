@@ -8,32 +8,57 @@ use Illuminate\Http\Request;
 
 class WorkspaceMemberController extends Controller
 {
-    // O Laravel é inteligente: como usamos {workspace} na rota, 
-    // ele já busca o projeto no banco de dados e injeta aqui automaticamente!
+    // 1. LISTAR MEMBROS DO PROJETO
+    public function index(Workspace $workspace)
+    {
+        // Retorna todos os usuários deste projeto, incluindo o 'role' (cargo) da tabela pivot
+        return response()->json($workspace->users);
+    }
+
+    // 2. ADICIONAR NOVO MEMBRO (Já tínhamos)
     public function store(Request $request, Workspace $workspace)
     {
-        // 1. Valida os dados de entrada
         $request->validate([
             'email' => 'required|email|exists:users,email',
             'role' => 'required|in:admin,editor,viewer',
         ]);
 
-        // 2. Busca o usuário pelo email
-        $user = User::where('email', $request->email)->first();
-
-        // 3. A MÁGICA AQUI: Verifica se o usuário já está no workspace
-        if ($workspace->users()->where('user_id', $user->id)->exists()) {
-            return response()->json([
-                'message' => 'Este usuário já é membro deste projeto.'
-            ], 409); // 409 = Conflict
+        // Impede que um não-admin adicione pessoas (Segurança extra)
+        $requester = $workspace->users()->where('users.id', $request->user()->id)->first();
+        if (!$requester || $requester->pivot->role !== 'admin') {
+            return response()->json(['message' => 'Apenas admins podem convidar membros.'], 403);
         }
 
-        // 4. Adiciona o usuário na tabela pivot com o cargo
+        $user = User::where('email', $request->email)->first();
+
+        if ($workspace->users()->where('user_id', $user->id)->exists()) {
+            return response()->json(['message' => 'Este usuário já é membro deste projeto.'], 409);
+        }
+
         $workspace->users()->attach($user->id, ['role' => $request->role]);
 
-        return response()->json([
-            'message' => 'Membro adicionado com sucesso!',
-            'user' => $user
-        ], 201);
+        return response()->json(['message' => 'Membro adicionado com sucesso!'], 201);
+    }
+
+    // 3. REMOVER MEMBRO (Com hierarquia)
+    public function destroy(Request $request, Workspace $workspace, $userId)
+    {
+        // Pega quem está tentando excluir
+        $requester = $workspace->users()->where('users.id', $request->user()->id)->first();
+        
+        // Se não for admin, bloqueia!
+        if (!$requester || $requester->pivot->role !== 'admin') {
+            return response()->json(['message' => 'Apenas administradores podem remover membros.'], 403);
+        }
+
+        // Evita que o admin remova a si mesmo acidentalmente por aqui
+        if ($request->user()->id == $userId) {
+            return response()->json(['message' => 'Você não pode remover a si mesmo por aqui.'], 400);
+        }
+
+        // Corta a relação do usuário com o projeto
+        $workspace->users()->detach($userId);
+
+        return response()->json(['message' => 'Membro removido do projeto.']);
     }
 }

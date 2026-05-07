@@ -39,4 +39,27 @@ class WorkspaceController extends Controller
             'workspace' => $workspace
         ], 201);
     }
+
+    /**
+     * Atualiza o nome do Workspace (Apenas Admins)
+     */
+    public function update(Request $request, $id)
+    {
+        $request->validate(['name' => 'required|string|max:255']);
+
+        // Busca o workspace e a relação do usuário logado com ele
+        $workspace = $request->user()->workspaces()->where('workspaces.id', $id)->firstOrFail();
+
+        // Checa a hierarquia na tabela pivot
+        if ($workspace->pivot->role !== 'admin') {
+            return response()->json(['message' => 'Apenas administradores podem renomear o projeto.'], 403);
+        }
+
+        $workspace->update(['name' => $request->name]);
+
+        return response()->json([
+            'message' => 'Projeto renomeado com sucesso!',
+            'workspace' => $workspace
+        ]);
+    }
 }

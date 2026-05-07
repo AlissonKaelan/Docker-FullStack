@@ -9,7 +9,7 @@ class Column extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'slug', 'order', 'user_id'];
+    protected $fillable = ['title', 'slug', 'order', 'user_id', 'workspace_id'];
 
     // ADICIONE ESTA FUNÇÃO:
     public function cards()

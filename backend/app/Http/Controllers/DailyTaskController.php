@@ -8,10 +8,9 @@ use Illuminate\Support\Facades\Auth;
 
 class DailyTaskController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Ordena: Recorrentes primeiro, depois Pendentes, depois Criadas recentemente
-        return DailyTask::where('user_id', Auth::id())
+        return DailyTask::where('workspace_id', $request->workspace_id)
             ->orderBy('is_completed', 'asc')
             ->orderBy('is_recurring', 'desc') 
             ->orderBy('created_at', 'desc')
@@ -24,6 +23,7 @@ class DailyTaskController extends Controller
 
         $task = DailyTask::create([
             'title' => $request->title,
+            'workspace_id' => $request->workspace_id,
             'user_id' => Auth::id(),
             'is_recurring' => $request->boolean('is_recurring', false)
         ]);
@@ -33,31 +33,28 @@ class DailyTaskController extends Controller
 
     public function update(Request $request, $id)
     {
-        $task = DailyTask::where('user_id', Auth::id())->findOrFail($id);
+        $task = DailyTask::where('workspace_id', $request->workspace_id)->findOrFail($id);
         $task->update($request->all());
         return response()->json($task);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $task = DailyTask::where('user_id', Auth::id())->findOrFail($id);
+        $task = DailyTask::where('workspace_id', $request->workspace_id)->findOrFail($id);
         $task->delete();
         return response()->json(['message' => 'Deleted']);
     }
 
-    // --- NOVA ROTA: INICIAR NOVO DIA ---
-    public function resetDay()
+    public function resetDay(Request $request)
     {
-        $userId = Auth::id();
+        $workspaceId = $request->workspace_id;
 
-        // 1. Apaga tarefas comuns que foram concluídas (limpeza)
-        DailyTask::where('user_id', $userId)
+        DailyTask::where('workspace_id', $workspaceId)
             ->where('is_completed', true)
             ->where('is_recurring', false)
             ->delete();
 
-        // 2. Reseta (desmarca) as tarefas recorrentes para serem feitas de novo
-        DailyTask::where('user_id', $userId)
+        DailyTask::where('workspace_id', $workspaceId)
             ->where('is_recurring', true)
             ->update(['is_completed' => false]);
 

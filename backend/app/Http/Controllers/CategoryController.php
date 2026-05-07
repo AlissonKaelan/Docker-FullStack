@@ -4,13 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class CategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Category::where('user_id', Auth::id())->get();
+        return Category::where('workspace_id', $request->workspace_id)->get();
     }
 
     public function store(Request $request)
@@ -18,22 +17,23 @@ class CategoryController extends Controller
         $request->validate([
             'name' => 'required|string|max:50',
             'type' => 'required|in:income,expense',
-            'color' => 'required|string' // Ex: #ff0000
+            'color' => 'required|string'
         ]);
 
         $category = Category::create([
             'name' => $request->name,
             'type' => $request->type,
             'color' => $request->color,
-            'user_id' => Auth::id()
+            'workspace_id' => $request->workspace_id,
+            'user_id' => $request->user()->id
         ]);
 
         return response()->json($category, 201);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $category = Category::where('user_id', Auth::id())->findOrFail($id);
+        $category = Category::where('workspace_id', $request->workspace_id)->findOrFail($id);
         $category->delete();
         return response()->json(['message' => 'Categoria excluída']);
     }

@@ -10,17 +10,16 @@ use Illuminate\Support\Facades\Auth;
 
 class KanbanController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // CORREÇÃO 1: Filtra pelo usuário logado e ordena por 'order'
-        $columns = Column::where('user_id', Auth::id())
+        $columns = Column::where('workspace_id', $request->workspace_id)
             ->with(['cards.subtasks' => function ($q) {
                 $q->orderBy('id');
             }])
             ->with(['cards' => function ($query) {
-                $query->orderBy('order'); // <--- Mudado de order_index para order
+                $query->orderBy('order'); 
             }])
-            ->orderBy('order') // <--- Mudado de order_index para order
+            ->orderBy('order') 
             ->get();
 
         return response()->json($columns);
@@ -31,14 +30,14 @@ class KanbanController extends Controller
         $request->validate(['title' => 'required']);
         $slug = \Illuminate\Support\Str::slug($request->title);
         
-        // CORREÇÃO 2: Pega o max 'order' apenas deste usuário
-        $maxOrder = Column::where('user_id', Auth::id())->max('order');
+        $maxOrder = Column::where('workspace_id', $request->workspace_id)->max('order');
         
         $column = Column::create([
             'title' => $request->title, 
             'slug' => $slug, 
             'order' => $maxOrder + 1, 
-            'user_id' => Auth::id()   
+            'workspace_id' => $request->workspace_id,
+            'user_id' => Auth::id()
         ]);
         
         return response()->json($column);
@@ -113,10 +112,10 @@ class KanbanController extends Controller
             }
             if (isset($targetSlug)) {
                 // Busca a coluna alvo APENAS DO USUÁRIO ATUAL
-                $autoCol = Column::where('user_id', Auth::id())
-                                ->where('slug', $targetSlug)
-                                ->first();
-                                 
+                $autoCol = Column::where('workspace_id', $request->workspace_id)
+                    ->where('slug', $targetSlug)
+                    ->first();
+
                 // Só muda a coluna se a coluna alvo existir e for diferente da atual
                 if ($autoCol && $card->column_id !== $autoCol->id) {
                     $data['column_id'] = $autoCol->id;
@@ -171,20 +170,19 @@ class KanbanController extends Controller
         $subtask->delete();
         return response()->json(['message' => 'Subtarefa deletada']);
     }
-    public function deleteCard($id)
+    public function deleteCard(Request $request, $id)
     {
-        // Garante que o card pertence a uma coluna do usuário logado (Segurança)
-        $card = Card::whereHas('column', function($q) {
-            $q->where('user_id', Auth::id());
+        $card = Card::whereHas('column', function($q) use ($request) {
+            $q->where('workspace_id', $request->workspace_id);
         })->findOrFail($id);
 
         $card->delete();
         
         return response()->json(['message' => 'Tarefa deletada']);
     }
-    public function deleteColumn($id)
+    public function deleteColumn(Request $request, $id)
     {
-        $column = Column::where('user_id', Auth::id())->findOrFail($id);
+        $column = Column::where('workspace_id', $request->workspace_id)->findOrFail($id);
         $column->delete();
         return response()->json(['message' => 'Deletada']);
     }

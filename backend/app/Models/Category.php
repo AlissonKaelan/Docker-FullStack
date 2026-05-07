@@ -9,7 +9,7 @@ class Category extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'color', 'type', 'user_id'];
+    protected $fillable = ['name', 'type', 'color', 'user_id', 'workspace_id'];
 
     public function transactions()
     {
