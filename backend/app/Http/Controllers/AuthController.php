@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -17,9 +18,8 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed' // 'confirmed' checa o password_confirmation automaticamente
+            'password' => 'required|string|min:8|confirmed' 
         ], [
-            // Aqui você dita exatamente o que o usuário vai ler
             'name.required' => 'Por favor, informe o seu nome completo.',
             'email.required' => 'O campo de e-mail é obrigatório.',
             'email.email' => 'Por favor, digite um e-mail válido.',
@@ -36,8 +36,16 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // Cria automaticamente as 3 colunas para este novo usuário
-        $user->columns()->createMany([
+        // 1. CRIA O WORKSPACE PADRÃO PARA O NOVO USUÁRIO
+        $workspace = Workspace::create([
+            'name' => 'Meu Workspace Pessoal'
+        ]);
+
+        // 2. VINCULA ELE COMO ADMIN
+        $workspace->users()->attach($user->id, ['role' => 'admin']);
+
+        // 3. CRIA AS COLUNAS DENTRO DO WORKSPACE E NÃO MAIS NO USUÁRIO
+        $workspace->columns()->createMany([
             ['title' => 'A Fazer', 'slug' => 'todo', 'order' => 1],
             ['title' => 'Em Progresso', 'slug' => 'doing', 'order' => 2],
             ['title' => 'Concluído', 'slug' => 'done', 'order' => 3],
@@ -46,7 +54,6 @@ class AuthController extends Controller
         // Gerar o Token
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        // Retornar usuário e token
         return response()->json([
             'message' => 'Usuário cadastrado com sucesso!',
             'user' => $user,
@@ -55,27 +62,25 @@ class AuthController extends Controller
         ], 201);
     }
 
-    //Login
+    // Login
     public function login(Request $request)
     {
-        // 1. Valida se o usuário preencheu os campos antes de tentar ir no banco
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        // 2. Tenta fazer o login
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            // Dispara um erro 422 simulando que o erro foi no campo "email"
+        // 1. Busca o usuário pelo e-mail
+        $user = User::where('email', $request->email)->first();
+
+        // 2. Faz a verificação manual do Hash da senha (100% Stateless, sem Sessão)
+        if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['As credenciais fornecidas estão incorretas.'],
             ]);
         }
 
-        $user = User::where('email', $request->email)->firstOrFail();
-
-        // Apaga tokens antigos e cria um novo (segurança extra)
-        // $user->tokens()->delete(); 
+        // 3. Gera o Token limpo do Sanctum
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -89,7 +94,6 @@ class AuthController extends Controller
     // 3. LOGOUT
     public function logout(Request $request)
     {
-        // Revoga o token atual
         $request->user()->currentAccessToken()->delete();
         return response()->json(['message' => 'Logout realizado com sucesso']);
     }
