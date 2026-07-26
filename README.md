@@ -1,4 +1,4 @@
-# 🚀 Docker FullStack Ecosystem: Kanban & Finance
+# Docker FullStack Ecosystem: Kanban & Finance
 
 Este repositório contém um ecossistema de aplicações integradas (Gerenciamento de Projetos + Gestão Financeira + Hábitos) desenvolvido com **Laravel API** e **Vue.js 3**, rodando inteiramente em **Docker**.
 
@@ -8,7 +8,7 @@ A arquitetura foi projetada para ser **Agnóstica de Rede (Stateless)**. Isso si
 
 O objetivo é criar uma plataforma unificada onde o esforço (Tarefas) se conecta ao custo (Finanças) e à rotina diária (Hábitos), com suporte a múltiplos usuários, autenticação robusta e interface moderna.
 
-### 🏗️ Módulos do Sistema
+### Módulos do Sistema
 
 #### 1. 🏢 Módulo de Workspaces (Hub Colaborativo)
 * **Arquitetura SaaS:** O sistema opera baseado em Workspaces (Projetos).
@@ -49,7 +49,7 @@ O objetivo é criar uma plataforma unificada onde o esforço (Tarefas) se conect
 
 ---
 
-## 🚀 Guia de Instalação e Execução
+## Guia de Instalação e Execução
 
 ### 1. Clonar e Iniciar
 ```bash
@@ -98,7 +98,7 @@ docker compose exec -d backend php artisan reverb:start --host="0.0.0.0" --port=
 
 ---
 
-## 📱 Como acessar de outro dispositivo (Celular/Tablet)
+## Como acessar de outro dispositivo (Celular/Tablet)
 
 O frontend foi programado com rotatividade de Host automática (`window.location.hostname`). Para testar no celular:
 
@@ -109,7 +109,7 @@ O frontend foi programado com rotatividade de Host automática (`window.location
 
 ---
 
-## 🚑 Troubleshooting (Resolução de Problemas Comuns)
+## Troubleshooting (Resolução de Problemas Comuns)
 
 Se você tentar acessar do celular e encontrar problemas, verifique o checklist abaixo:
 
@@ -131,6 +131,7 @@ Se você tentar acessar do celular e encontrar problemas, verifique o checklist 
 ### Erro 3: Erro 419 (CSRF Token Mismatch) ao fazer Login
 * **Causa:** O Laravel está tentando usar Sessões (Cookies) numa requisição externa.
 * **Solução:**
+  
   1. No `backend/.env`, garanta que `SANCTUM_STATEFUL_DOMAINS=` está totalmente vazio.
   2. Rode no terminal do PC: `docker compose exec backend php artisan config:clear`.
   3. Acesse por uma Aba Anônima no celular para limpar o cache antigo.
