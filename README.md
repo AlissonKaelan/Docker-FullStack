@@ -59,7 +59,7 @@ O objetivo é criar uma plataforma unificada onde o esforço (Tarefas) se conect
 
 ### 1. Clonar e Iniciar
 ```bash
-git clone [https://github.com/SeuUsuario/Docker-FullStack.git](https://github.com/SeuUsuario/Docker-FullStack.git)
+git clone https://github.com/AlissonKaelan/Docker-FullStack
 cd Docker-FullStack
 docker compose up -d
 
@@ -136,16 +136,46 @@ docker compose exec -d backend php artisan reverb:start --host="0.0.0.0" --port=
 
 ```
 
+### 6. Ligar e Desligar o Sistema (Uso Diário)
+
+Após a configuração inicial, você não precisa repetir os passos acima. Para o uso no dia a dia, utilize os comandos básicos na raiz do projeto via terminal:
+
+Para ligar todos os serviços em segundo plano:
+
+```bash
+docker compose up -d
+
+```
+
+Para desligar todos os serviços:
+
+```bash
+docker compose down
+
+```
+
+Para reiniciar um serviço específico (ex: frontend):
+
+```bash
+docker compose restart frontend
+
+```
+
 ---
 
-## Como acessar de outro dispositivo (Celular/Tablet)
+## Como acessar localmente (No próprio computador)
+
+1. Abra o seu navegador e acesse a URL: `http://localhost:5173`
+2. **Nota:** Caso queira acessar utilizando o IP da sua máquina em vez de "localhost", descubra o seu IP seguindo o passo a passo da seção abaixo e acesse a URL: `http://<SEU_IP>:5173`
+
+## Como acessar de outro dispositivo (Celular / Tablet)
 
 O frontend foi programado com rotatividade de Host automática (window.location.hostname). Para testar no celular:
 
-1. Garanta que o PC e o celular estão na mesma rede Wi-Fi.
-2. Descubra o IP do seu PC (ex: 192.168.1.5). No Windows, use ipconfig. No Linux, ip addr.
-3. Abra o navegador do celular e digite: http://192.168.1.5:5173
-4. A API e os WebSockets se adaptarão automaticamente para esse endereço!
+1. Garanta que o PC e o celular estão conectados na mesma rede Wi-Fi.
+2. Descubra o IP do seu PC (ex: 192.168.1.5). No Windows, abra o terminal e use `ipconfig`. No Linux, use `ip addr`.
+3. Abra o navegador do celular e digite: `http://192.168.1.5:5173`
+4. A API e os WebSockets se adaptarão automaticamente para o endereço acessado!
 
 ---
 
@@ -172,12 +202,25 @@ O frontend foi programado com rotatividade de Host automática (window.location.
 * Solução: Rode o comando `docker compose exec backend php artisan key:generate` seguido de `php artisan config:clear`.
 
 ### Erro: A página fica carregando e dá TIMEOUT no celular
+* Causa: O Firewall do Windows ou a rede interna do WSL2 não estão permitindo que a conexão do Wi-Fi chegue até os containers do Docker.
+* Solução (Executar no Windows):
+  Abra o programa **PowerShell** no Windows como **Administrador** e execute os dois passos abaixo:
 
-* Causa: O Firewall do Windows ou o WSL2 estão bloqueando a conexão.
-* Solução para Firewall:
-Abra o PowerShell como Administrador e rode:
-`New-NetFirewallRule -DisplayName "Docker App Ports" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 5173,8000,8080`
-* Solução para o WSL2 (Forçar ponte de portas):
-Abra o PowerShell como Administrador e rode:
-`netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=5173 connectaddress=127.0.0.1 connectport=5173`
-(Faça o mesmo para as portas 8000 e 8080).
+  **Passo 1: Liberar as portas no Firewall do Windows**
+  Copie o comando abaixo, cole no PowerShell e aperte Enter:
+  ```powershell
+  New-NetFirewallRule -DisplayName "Docker App Ports" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 5173,8000,8080
+  ```
+
+  **Passo 2: Criar as pontes de rede do WSL2**
+  Como o WSL2 cria uma "bolha", precisamos forçar o repasse das portas. Copie e cole os três comandos abaixo no PowerShell, apertando Enter após cada um:
+
+  ```powershell
+  netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=5173 connectaddress=127.0.0.1 connectport=5173
+  ```
+  ```powershell
+  netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=8000 connectaddress=127.0.0.1 connectport=8000
+  ```
+  ```powershell
+  netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=8080 connectaddress=127.0.0.1 connectport=8080
+  ```
