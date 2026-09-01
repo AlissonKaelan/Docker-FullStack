@@ -18,4 +18,9 @@ class Workspace extends Model
         // O segundo parâmetro força o nome da tabela
         return $this->belongsToMany(User::class, 'workspace_user')->withPivot('role')->withTimestamps();
     }
+
+    public function columns()
+    {
+        return $this->hasMany(Column::class);
+    }
 }

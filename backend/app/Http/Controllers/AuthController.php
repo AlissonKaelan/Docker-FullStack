@@ -46,9 +46,9 @@ class AuthController extends Controller
 
         // 3. CRIA AS COLUNAS DENTRO DO WORKSPACE E NÃO MAIS NO USUÁRIO
         $workspace->columns()->createMany([
-            ['title' => 'A Fazer', 'slug' => 'todo', 'order' => 1],
-            ['title' => 'Em Progresso', 'slug' => 'doing', 'order' => 2],
-            ['title' => 'Concluído', 'slug' => 'done', 'order' => 3],
+            ['title' => 'A Fazer', 'slug' => 'todo', 'order' => 1, 'user_id' => $user->id],
+            ['title' => 'Em Progresso', 'slug' => 'doing', 'order' => 2, 'user_id' => $user->id],
+            ['title' => 'Concluído', 'slug' => 'done', 'order' => 3, 'user_id' => $user->id],
         ]);
 
         // Gerar o Token
